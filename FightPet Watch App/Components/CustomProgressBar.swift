@@ -33,7 +33,7 @@ struct CustomProgressBar: View {
                 // 前景
                 RoundedRectangle(cornerRadius: height / 2)
                     .fill(color)
-                    .frame(width: max(0, geometry.size.width * progress),
+                    .frame(width: Swift.max(0, geometry.size.width * progress),
                            height: height)
                     .animation(Constants.Animation.spring, value: current)
             }

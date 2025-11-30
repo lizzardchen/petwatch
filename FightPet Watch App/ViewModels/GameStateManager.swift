@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 /// 游戏状态管理器
 class GameStateManager: ObservableObject {
