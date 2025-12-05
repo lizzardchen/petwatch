@@ -32,7 +32,7 @@ struct UpgradeItem: Identifiable, Codable {
     
     init(id: UUID = UUID(),
          type: UpgradeItemType,
-         level: Int = 1,
+         level: Int = 0,
          maxLevel: Int = 10) {
         self.id = id
         self.type = type
@@ -40,7 +40,29 @@ struct UpgradeItem: Identifiable, Codable {
         self.maxLevel = maxLevel
     }
     
-    /// 当前等级收益
+    /// 是否已解锁（level > 0 表示已解锁）
+    var isUnlocked: Bool {
+        return level > 0
+    }
+    
+    /// 是否已满级
+    var isMaxLevel: Bool {
+        return level >= maxLevel
+    }
+    
+    /// 解锁条件描述
+    func unlockRequirement() -> String {
+        switch type {
+        case .petBed:
+            return "" // 宠物床是默认解锁的
+        case .foodBowl:
+            return "需要宠物床 满"
+        case .toy:
+            return "需要食物碗 满"
+        }
+    }
+    
+    /// 当前等级收益（每小时钻石）
     func currentBonus() -> Int {
         return level * 2
     }
@@ -52,6 +74,9 @@ struct UpgradeItem: Identifiable, Codable {
     
     /// 升级所需钻石
     func upgradeCost() -> Int {
+        if level == 0 {
+            return 100 // 解锁费用
+        }
         return level * 75
     }
     
