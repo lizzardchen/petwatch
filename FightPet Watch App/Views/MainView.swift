@@ -134,18 +134,17 @@ struct TopBar: View {
                     .minimumScaleFactor(0.7)
                     .fixedSize(horizontal: true, vertical: false)
                 
-                Button(action: onAddDiamonds) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: buttonSize))
-                        .foregroundColor(.cyan)
-                        .frame(width: buttonSize, height: buttonSize)  // 明确图标尺寸
-                }
-                .buttonStyle(.plain)
-                .frame(width: buttonSize+4, height: buttonSize+4)  // 限制按钮尺寸
-                .contentShape(Rectangle())  // 明确点击区域为矩形
-                .clipped()  // 裁剪超出部分
+                // 使用 ZStack 确保按钮在最上层
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: buttonSize))
+                    .foregroundColor(.cyan)
+                    .frame(width: buttonSize + 4, height: buttonSize + 4)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        onAddDiamonds()
+                    }
+                    .zIndex(999)  // 确保在最上层
             }
-            .border(Color.green, width: 2)  // 左侧 HStack 的边界
             .fixedSize()  // 防止 HStack 扩展
             
             Spacer()
@@ -160,7 +159,7 @@ struct TopBar: View {
             // }
             // .border(Color.green, width: 2)  // 左侧 HStack 的边界
         }
-        .border(Color.green, width: 2)  // 左侧 HStack 的边界
+        .zIndex(100)  // 确保整个 TopBar 在其他视图之上
     }
 }
 
