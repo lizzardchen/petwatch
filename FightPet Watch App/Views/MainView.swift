@@ -148,14 +148,14 @@ struct TopBar: View {
             Spacer()
             
             // 战力（无背景）
-            HStack(alignment: .center,spacing: spacing) {
-                Text("⚡")
-                    .font(.system(size: iconSize))
-                Text("战力 \(power)")
-                    .font(.system(size: fontSize, weight: .semibold))
-                    .foregroundColor(.white)
-            }
-            .border(Color.green, width: 2)  // 左侧 HStack 的边界
+            // HStack(alignment: .center,spacing: spacing) {
+            //     Text("⚡")
+            //         .font(.system(size: iconSize))
+            //     Text("战力 \(power)")
+            //         .font(.system(size: fontSize, weight: .semibold))
+            //         .foregroundColor(.white)
+            // }
+            // .border(Color.green, width: 2)  // 左侧 HStack 的边界
         }
         .border(Color.green, width: 2)  // 左侧 HStack 的边界
     }
