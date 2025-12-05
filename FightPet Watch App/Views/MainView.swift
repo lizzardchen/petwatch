@@ -138,12 +138,15 @@ struct TopBar: View {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: buttonSize))
                         .foregroundColor(.cyan)
+                        .frame(width: buttonSize, height: buttonSize)  // 明确图标尺寸
                 }
                 .buttonStyle(.plain)
-                .frame(width: buttonSize + 2, height: buttonSize + 2)  // 限制按钮尺寸，增加一点 padding
-                .background(Color.red.opacity(0.3))  // 红色半透明背景，显示点击区域
+                .frame(width: buttonSize+4, height: buttonSize+4)  // 限制按钮尺寸
+                .contentShape(Rectangle())  // 明确点击区域为矩形
+                .clipped()  // 裁剪超出部分
             }
             .border(Color.green, width: 2)  // 左侧 HStack 的边界
+            .fixedSize()  // 防止 HStack 扩展
             
             Spacer()
             
