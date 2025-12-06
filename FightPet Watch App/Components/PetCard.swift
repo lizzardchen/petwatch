@@ -26,22 +26,22 @@ struct PetCard: View {
             // 第1行：等级 + 进度条 + 经验值 + 重生按钮（全部在一行）
             HStack(spacing: LayoutConstants.scaledWidth(4, screenWidth: screenWidth)) {
                 // 等级
-                HStack(spacing: LayoutConstants.scaledWidth(3, screenWidth: screenWidth)) {
-                    Text("⭐")
-                        .font(.system(size: LayoutConstants.scaledWidth(LayoutConstants.PetCard.levelIconSize, screenWidth: screenWidth)))
-                    Text("Lv.\(pet.level)")
+                HStack(spacing: LayoutConstants.scaledWidth(2, screenWidth: screenWidth)) {
+                    Text("⭐Lv.\(pet.level)")
                         .font(.system(size: LayoutConstants.scaledWidth(LayoutConstants.PetCard.levelFontSize, screenWidth: screenWidth), weight: .bold))
+                        .lineLimit(1)
                         .minimumScaleFactor(0.5)
-                        .fixedSize(horizontal: true, vertical: false)
                 }
                 .foregroundColor(.white)
+                .layoutPriority(1) // 优先保证等级显示
 
                 // 经验值
                 Text("\(pet.exp)/\(pet.expRequiredForNextLevel())")
                     .font(.system(size: LayoutConstants.scaledWidth(LayoutConstants.PetCard.expFontSize, screenWidth: screenWidth)))
                     .foregroundColor(.white.opacity(0.7))
-                    .minimumScaleFactor(0.3)
-                    .fixedSize(horizontal: true, vertical: false)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.4)
+                    .layoutPriority(1) // 优先保证经验显示
                 
                 // 重生按钮（当达到99级时显示）
                 if pet.level >= 99 {
@@ -93,9 +93,7 @@ struct PetCard: View {
                 Spacer()
                 
                 HStack(spacing: LayoutConstants.scaledWidth(LayoutConstants.PetCard.statSpacing, screenWidth: screenWidth)) {
-                    Text("🌙")
-                        .font(.system(size: LayoutConstants.scaledWidth(LayoutConstants.PetCard.statIconSize, screenWidth: screenWidth)))
-                    Text("睡眠+\(pet.sleepBonus)")
+                    Text("🌙睡眠+\(pet.sleepBonus)")
                         .font(.system(size: LayoutConstants.scaledWidth(LayoutConstants.PetCard.statFontSize, screenWidth: screenWidth)))
                         .minimumScaleFactor(0.5)
                         .fixedSize(horizontal: true, vertical: false)

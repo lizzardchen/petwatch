@@ -58,7 +58,7 @@ struct LayoutConstants {
     // MARK: - 宠物状态卡片（PetCard）
     struct PetCard {
         /// 水平内边距
-        static let horizontalPadding: CGFloat = 8
+        static let horizontalPadding: CGFloat = 4
         /// 垂直内边距
         static let verticalPadding: CGFloat = 1
         /// 卡片圆角
@@ -66,25 +66,25 @@ struct LayoutConstants {
         /// 元素间距
         static let spacing: CGFloat = 4
         /// 等级图标大小
-        static let levelIconSize: CGFloat = 14
+        static let levelIconSize: CGFloat = 11
         /// 等级字体大小
-        static let levelFontSize: CGFloat = 20
+        static let levelFontSize: CGFloat = 11
         /// 经验值字体大小
-        static let expFontSize: CGFloat = 11
+        static let expFontSize: CGFloat = 10
         /// 进度条高度
         static let progressBarHeight: CGFloat = 6
         /// 重生按钮水平内边距
-        static let rebirthButtonHPadding: CGFloat = 9
+        static let rebirthButtonHPadding: CGFloat = 10
         /// 重生按钮垂直内边距
-        static let rebirthButtonVPadding: CGFloat = 4
+        static let rebirthButtonVPadding: CGFloat = 3
         /// 重生按钮字体大小
-        static let rebirthButtonFontSize: CGFloat = 10
+        static let rebirthButtonFontSize: CGFloat = 9
         /// 重生按钮图标大小
-        static let rebirthButtonIconSize: CGFloat = 10
+        static let rebirthButtonIconSize: CGFloat = 9
         /// 重生按钮圆角
-        static let rebirthButtonCornerRadius: CGFloat = 14
+        static let rebirthButtonCornerRadius: CGFloat = 6
         /// 统计图标大小
-        static let statIconSize: CGFloat = 12
+        static let statIconSize: CGFloat = 10
         /// 统计字体大小
         static let statFontSize: CGFloat = 10
         /// 统计元素间距
@@ -92,9 +92,9 @@ struct LayoutConstants {
         
         // MARK: 行高比例（相对于卡片区域高度）
         /// 第一行（等级+经验）高度比例
-        static let firstRowHeightRatio: CGFloat = 0.6
+        static let firstRowHeightRatio: CGFloat = 0.45
         /// 第二行（统计信息）高度比例
-        static let secondRowHeightRatio: CGFloat = 0.6
+        static let secondRowHeightRatio: CGFloat = 0.45
         /// 行间距比例
         static let rowSpacingRatio: CGFloat = 0.02
     }
