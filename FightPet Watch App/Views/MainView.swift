@@ -44,7 +44,7 @@ struct MainView: View {
                         screenWidth: screenWidth,
                         screenHeight: fixedSectionHeight)
                         .padding(.horizontal, LayoutConstants.scaledWidth(8, screenWidth: screenWidth))
-                        .padding(.bottom, LayoutConstants.scaledHeight(3, screenHeight: fixedSectionHeight))
+                        .padding(.bottom, LayoutConstants.scaledHeight(20, screenHeight: fixedSectionHeight))
                         
                         // 功能按钮
                         HStack(spacing: LayoutConstants.scaledWidth(LayoutConstants.ActionButton.buttonSpacing, screenWidth: screenWidth)) {
@@ -93,7 +93,7 @@ struct MainView: View {
                         }
                     }
                     .frame(height: scrollSectionHeight)
-                }
+                } 
             }
         }
         .sheet(isPresented: $showRanking) {
@@ -119,7 +119,7 @@ struct TopBar: View {
     var body: some View {
         let iconSize: CGFloat = 14
         let fontSize: CGFloat = 13
-        let buttonSize: CGFloat = 14
+        let buttonSize: CGFloat = 20
         let spacing: CGFloat = 4
         
         HStack(alignment: .center,spacing: 8) {
@@ -145,6 +145,7 @@ struct TopBar: View {
                     }
                     .zIndex(999)  // 确保在最上层
             }
+            //.border(Color.green, width: 2)  // 左侧 HStack 的边界
             .fixedSize()  // 防止 HStack 扩展
             
             Spacer()

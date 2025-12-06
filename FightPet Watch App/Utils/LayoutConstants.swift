@@ -50,9 +50,9 @@ struct LayoutConstants {
         /// 元素间距
         static let spacing: CGFloat = 4
         /// 顶部外边距
-        static let topMargin: CGFloat = 3
+        static let topMargin: CGFloat = 0
         /// 底部外边距
-        static let bottomMargin: CGFloat = 3
+        static let bottomMargin: CGFloat = 16
     }
     
     // MARK: - 宠物状态卡片（PetCard）
