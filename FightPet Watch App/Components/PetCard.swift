@@ -14,7 +14,15 @@ struct PetCard: View {
         let spacing = LayoutConstants.scaledWidth(LayoutConstants.PetCard.spacing, screenWidth: screenWidth)
         let cornerRadius = LayoutConstants.scaledWidth(LayoutConstants.PetCard.cornerRadius, screenWidth: screenWidth)
         
-        VStack(spacing: spacing) {
+        // 计算卡片内容区域高度（去掉padding后的高度）
+        let contentHeight = screenHeight - (vPadding * 2)
+        
+        // 根据比例计算每行的固定高度
+        let firstRowHeight = contentHeight * LayoutConstants.PetCard.firstRowHeightRatio
+        let secondRowHeight = contentHeight * LayoutConstants.PetCard.secondRowHeightRatio
+        let rowSpacing = contentHeight * LayoutConstants.PetCard.rowSpacingRatio
+        
+        VStack(spacing: rowSpacing) {
             // 第1行：等级 + 进度条 + 经验值 + 重生按钮（全部在一行）
             HStack(spacing: LayoutConstants.scaledWidth(4, screenWidth: screenWidth)) {
                 // 等级
@@ -23,22 +31,24 @@ struct PetCard: View {
                         .font(.system(size: LayoutConstants.scaledWidth(LayoutConstants.PetCard.levelIconSize, screenWidth: screenWidth)))
                     Text("Lv.\(pet.level)")
                         .font(.system(size: LayoutConstants.scaledWidth(LayoutConstants.PetCard.levelFontSize, screenWidth: screenWidth), weight: .bold))
+                        .minimumScaleFactor(0.5)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
                 .foregroundColor(.white)
-                
-                // 进度条
-                CustomProgressBar(current: pet.exp,
-                                max: pet.expRequiredForNextLevel(),
-                                color: Constants.Colors.purple,
-                                height: LayoutConstants.scaledHeight(LayoutConstants.PetCard.progressBarHeight, screenHeight: screenHeight))
-                    .frame(maxWidth: .infinity)
+
+                // // 进度条
+                // CustomProgressBar(current: pet.exp,
+                //                 max: pet.expRequiredForNextLevel(),
+                //                 color: Constants.Colors.purple,
+                //                 height: LayoutConstants.scaledHeight(LayoutConstants.PetCard.progressBarHeight, screenHeight: screenHeight))
+                //     .frame(maxWidth: .infinity)
                 
                 // 经验值
                 Text("\(pet.exp)/\(pet.expRequiredForNextLevel())")
                     .font(.system(size: LayoutConstants.scaledWidth(LayoutConstants.PetCard.expFontSize, screenWidth: screenWidth)))
                     .foregroundColor(.white.opacity(0.7))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
+                    .minimumScaleFactor(0.3)
+                    .fixedSize(horizontal: true, vertical: false)
                 
                 // 重生按钮（当达到99级时显示）
                 if pet.level >= 99 {
@@ -66,6 +76,7 @@ struct PetCard: View {
                     .buttonStyle(.plain)
                 }
             }
+            .frame(height: firstRowHeight)
             
             // 第2行：成长速率和睡眠值
             HStack(spacing: LayoutConstants.scaledWidth(LayoutConstants.PetCard.statSpacing * 2, screenWidth: screenWidth)) {
@@ -74,8 +85,8 @@ struct PetCard: View {
                         .font(.system(size: LayoutConstants.scaledWidth(LayoutConstants.PetCard.statIconSize, screenWidth: screenWidth)))
                     Text("+\(pet.expPerMinute)/分钟")
                         .font(.system(size: LayoutConstants.scaledWidth(LayoutConstants.PetCard.statFontSize, screenWidth: screenWidth)))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+                        .minimumScaleFactor(0.5)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
                 .foregroundColor(.white.opacity(0.8))
                 
@@ -86,11 +97,12 @@ struct PetCard: View {
                         .font(.system(size: LayoutConstants.scaledWidth(LayoutConstants.PetCard.statIconSize, screenWidth: screenWidth)))
                     Text("睡眠+\(pet.sleepBonus)")
                         .font(.system(size: LayoutConstants.scaledWidth(LayoutConstants.PetCard.statFontSize, screenWidth: screenWidth)))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+                        .minimumScaleFactor(0.5)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
                 .foregroundColor(.white.opacity(0.8))
             }
+            .frame(height: secondRowHeight)
         }
         .padding(.horizontal, hPadding)
         .padding(.vertical, vPadding)

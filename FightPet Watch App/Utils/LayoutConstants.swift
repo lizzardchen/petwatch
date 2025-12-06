@@ -60,19 +60,19 @@ struct LayoutConstants {
         /// 水平内边距
         static let horizontalPadding: CGFloat = 10
         /// 垂直内边距
-        static let verticalPadding: CGFloat = 7
+        static let verticalPadding: CGFloat = 6
         /// 卡片圆角
         static let cornerRadius: CGFloat = 14
         /// 元素间距
-        static let spacing: CGFloat = 5
+        static let spacing: CGFloat = 4
         /// 等级图标大小
-        static let levelIconSize: CGFloat = 13
+        static let levelIconSize: CGFloat = 14
         /// 等级字体大小
-        static let levelFontSize: CGFloat = 12
+        static let levelFontSize: CGFloat = 20
         /// 经验值字体大小
-        static let expFontSize: CGFloat = 9
+        static let expFontSize: CGFloat = 11
         /// 进度条高度
-        static let progressBarHeight: CGFloat = 5
+        static let progressBarHeight: CGFloat = 6
         /// 重生按钮水平内边距
         static let rebirthButtonHPadding: CGFloat = 9
         /// 重生按钮垂直内边距
@@ -86,9 +86,17 @@ struct LayoutConstants {
         /// 统计图标大小
         static let statIconSize: CGFloat = 12
         /// 统计字体大小
-        static let statFontSize: CGFloat = 9
+        static let statFontSize: CGFloat = 10
         /// 统计元素间距
         static let statSpacing: CGFloat = 3
+        
+        // MARK: 行高比例（相对于卡片区域高度）
+        /// 第一行（等级+经验）高度比例
+        static let firstRowHeightRatio: CGFloat = 0.4
+        /// 第二行（统计信息）高度比例
+        static let secondRowHeightRatio: CGFloat = 0.4
+        /// 行间距比例
+        static let rowSpacingRatio: CGFloat = 0.20
     }
     
     // MARK: - 功能按钮（GradientButton）
