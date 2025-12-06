@@ -43,7 +43,7 @@ struct MainView: View {
                         },
                         screenWidth: screenWidth,
                         screenHeight: fixedSectionHeight)
-                        .padding(.horizontal, LayoutConstants.scaledWidth(8, screenWidth: screenWidth))
+                        .padding(.horizontal, LayoutConstants.scaledWidth(4, screenWidth: screenWidth))
                         .padding(.bottom, LayoutConstants.scaledHeight(20, screenHeight: fixedSectionHeight))
                         
                         // 功能按钮

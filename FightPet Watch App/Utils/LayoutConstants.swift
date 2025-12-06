@@ -58,11 +58,11 @@ struct LayoutConstants {
     // MARK: - 宠物状态卡片（PetCard）
     struct PetCard {
         /// 水平内边距
-        static let horizontalPadding: CGFloat = 10
+        static let horizontalPadding: CGFloat = 8
         /// 垂直内边距
-        static let verticalPadding: CGFloat = 6
+        static let verticalPadding: CGFloat = 1
         /// 卡片圆角
-        static let cornerRadius: CGFloat = 14
+        static let cornerRadius: CGFloat = 8
         /// 元素间距
         static let spacing: CGFloat = 4
         /// 等级图标大小
@@ -92,11 +92,11 @@ struct LayoutConstants {
         
         // MARK: 行高比例（相对于卡片区域高度）
         /// 第一行（等级+经验）高度比例
-        static let firstRowHeightRatio: CGFloat = 0.4
+        static let firstRowHeightRatio: CGFloat = 0.6
         /// 第二行（统计信息）高度比例
-        static let secondRowHeightRatio: CGFloat = 0.4
+        static let secondRowHeightRatio: CGFloat = 0.6
         /// 行间距比例
-        static let rowSpacingRatio: CGFloat = 0.20
+        static let rowSpacingRatio: CGFloat = 0.02
     }
     
     // MARK: - 功能按钮（GradientButton）

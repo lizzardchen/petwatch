@@ -22,7 +22,7 @@ struct PetCard: View {
         let secondRowHeight = contentHeight * LayoutConstants.PetCard.secondRowHeightRatio
         let rowSpacing = contentHeight * LayoutConstants.PetCard.rowSpacingRatio
         
-        VStack(spacing: rowSpacing) {
+        VStack(alignment: .center, spacing: rowSpacing) {
             // 第1行：等级 + 进度条 + 经验值 + 重生按钮（全部在一行）
             HStack(spacing: LayoutConstants.scaledWidth(4, screenWidth: screenWidth)) {
                 // 等级
@@ -36,13 +36,6 @@ struct PetCard: View {
                 }
                 .foregroundColor(.white)
 
-                // // 进度条
-                // CustomProgressBar(current: pet.exp,
-                //                 max: pet.expRequiredForNextLevel(),
-                //                 color: Constants.Colors.purple,
-                //                 height: LayoutConstants.scaledHeight(LayoutConstants.PetCard.progressBarHeight, screenHeight: screenHeight))
-                //     .frame(maxWidth: .infinity)
-                
                 // 经验值
                 Text("\(pet.exp)/\(pet.expRequiredForNextLevel())")
                     .font(.system(size: LayoutConstants.scaledWidth(LayoutConstants.PetCard.expFontSize, screenWidth: screenWidth)))
@@ -52,6 +45,7 @@ struct PetCard: View {
                 
                 // 重生按钮（当达到99级时显示）
                 if pet.level >= 99 {
+                    Spacer() // 把按钮推到右边
                     Button(action: {
                         onRebirth?()
                     }) {
@@ -74,9 +68,15 @@ struct PetCard: View {
                         .cornerRadius(LayoutConstants.scaledWidth(LayoutConstants.PetCard.rebirthButtonCornerRadius, screenWidth: screenWidth))
                     }
                     .buttonStyle(.plain)
+                } else {
+                    Spacer() // 即使没有按钮也要占位，确保对齐（虽然这里可能不需要，因为是leading，但加个spacer比较保险能撑开背景）
                 }
             }
-            .frame(height: firstRowHeight)
+            .padding(.horizontal, hPadding)
+            .padding(.vertical, vPadding)
+            .frame(maxWidth: .infinity, minHeight: firstRowHeight, alignment: .leading)
+            .background(Constants.Colors.darkGray.opacity(0.7))
+            .cornerRadius(cornerRadius)
             
             // 第2行：成长速率和睡眠值
             HStack(spacing: LayoutConstants.scaledWidth(LayoutConstants.PetCard.statSpacing * 2, screenWidth: screenWidth)) {
@@ -102,9 +102,14 @@ struct PetCard: View {
                 }
                 .foregroundColor(.white.opacity(0.8))
             }
-            .frame(height: secondRowHeight)
+            .padding(.horizontal, hPadding)
+            .padding(.vertical, vPadding)
+            .frame(maxWidth: .infinity, minHeight: secondRowHeight, alignment: .leading)
+            .background(Constants.Colors.darkGray.opacity(0.7))
+            .cornerRadius(cornerRadius)
         }
-        .padding(.horizontal, hPadding)
+        .frame(maxWidth: .infinity)
+        // .padding(.horizontal, hPadding) // 移除了外层的 horizontal padding，让背景可以撑满
         .padding(.vertical, vPadding)
         .background(Constants.Colors.darkGray.opacity(0.6))
         .cornerRadius(cornerRadius)
