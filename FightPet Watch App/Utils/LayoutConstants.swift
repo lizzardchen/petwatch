@@ -88,13 +88,13 @@ struct LayoutConstants {
     // MARK: - 功能按钮（GradientButton）
     struct ActionButton {
         /// 按钮高度
-        static let height: CGFloat = 36
+        static let height: CGFloat = 24
         /// 按钮圆角
-        static let cornerRadius: CGFloat = 20
+        static let cornerRadius: CGFloat = 8
         /// 图标大小
-        static let iconSize: CGFloat = 16
+        static let iconSize: CGFloat = 12
         /// 字体大小
-        static let fontSize: CGFloat = 12
+        static let fontSize: CGFloat = 11
         /// 图标和文字间距
         static let iconTextSpacing: CGFloat = 4
         /// 按钮之间的间距
