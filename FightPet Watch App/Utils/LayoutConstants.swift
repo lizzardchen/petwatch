@@ -27,6 +27,8 @@ struct LayoutConstants {
         static let iconSize: CGFloat = 13
         /// 字体大小
         static let fontSize: CGFloat = 12
+        //addbutton size
+        static let buttonSize:CGFloat = 20
         /// 加号按钮大小
         static let plusButtonSize: CGFloat = 16
         /// 元素间距

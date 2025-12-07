@@ -7,6 +7,33 @@ struct PetCard: View {
     let screenWidth: CGFloat
     let screenHeight: CGFloat
     
+    /// 计算 PetCard 的理想总高度（包含 padding）
+    /// 这个高度是基于设计规范的固定值，不依赖外部参数
+    static func idealHeight(screenWidth: CGFloat, screenHeight: CGFloat) -> CGFloat {
+        let vPadding = LayoutConstants.scaledWidth(LayoutConstants.PetCard.verticalPadding, screenWidth: screenWidth)
+        // 计算卡片内容区域高度（去掉padding后的高度）
+        let contentHeight = screenHeight - (vPadding * 2)
+        // 根据比例计算每行的固定高度
+        let firstRowHeight = contentHeight * LayoutConstants.PetCard.firstRowHeightRatio
+        let secondRowHeight = contentHeight * LayoutConstants.PetCard.secondRowHeightRatio
+        let rowSpacing = contentHeight * LayoutConstants.PetCard.rowSpacingRatio
+        // 每行内部的 vPadding (上下各一次)
+        let innerPadding = vPadding * rowSpacing  // 两行，每行上下各有 vPadding
+        // 外层 vPadding (上下各一次)
+        let outerPadding = vPadding * rowSpacing*0.5
+        
+        return firstRowHeight + secondRowHeight + rowSpacing + innerPadding //+ outerPadding
+    }
+    
+    /// 计算 PetCard 在 MainView 中的总高度（包含外部 padding）
+    static func totalHeightInMainView(screenWidth: CGFloat, screenHeight: CGFloat) -> CGFloat {
+        let cardHeight = idealHeight(screenWidth: screenWidth, screenHeight: screenHeight)
+        let topMargin = LayoutConstants.scaledHeight(LayoutConstants.PetCard.topMargin, screenHeight: screenHeight)
+        let bottomMargin = LayoutConstants.scaledHeight(LayoutConstants.PetCard.bottomMargin, screenHeight: screenHeight)
+        
+        return cardHeight + topMargin + bottomMargin
+    }
+    
     var body: some View {
         // 使用精确的布局常量，并根据屏幕尺寸缩放
         let hPadding = LayoutConstants.scaledWidth(LayoutConstants.PetCard.horizontalPadding, screenWidth: screenWidth)

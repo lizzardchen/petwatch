@@ -13,7 +13,10 @@ struct MainView: View {
             let screenHeight = geometry.size.height
             let screenWidth = geometry.size.width
             let fixedSectionHeight = screenHeight * LayoutConstants.fixedSectionHeightRatio
-            let scrollSectionHeight = screenHeight * (1 - LayoutConstants.fixedSectionHeightRatio)
+
+            let idealFixedHeight = FixedSectionHeightCalculator.idealFixedSectionHeight(screenWidth: screenWidth, screenHeight: fixedSectionHeight)
+            // 3. 滚动区域的高度 = 剩余屏幕高度 - 固定区域高度
+            let scrollSectionHeight = screenHeight - idealFixedHeight
             
             ZStack {
                 // 背景渐变（覆盖整个界面）
@@ -25,7 +28,7 @@ struct MainView: View {
                 .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // 固定顶部区域（不滚动）- 占据约35%的高度
+                    // 固定顶部区域（不滚动）- 根据实际内容自适应高度
                     VStack(spacing: 0) {
                         // 顶部信息栏
                         TopBar(diamonds: gameState.player.diamonds,
@@ -74,10 +77,9 @@ struct MainView: View {
                     .ignoresSafeArea(edges: .top)
                     .frame(height: fixedSectionHeight)
                     
-                    // 可滚动的底部区域（占据剩余65%）
+                    // 可滚动的底部区域（占据剩余高度）
                     ScrollView {
                         VStack(spacing: scrollSectionHeight * 0.08) {
-                            // 宠物展示区
                             PetDisplayView(pet: gameState.player.currentPet,
                                          screenWidth: screenWidth)
                                 .padding(.horizontal, screenWidth * 0.04)
@@ -110,6 +112,24 @@ struct MainView: View {
         }
     }
 }
+/// 辅助结构：计算固定区域各部分的高度
+struct FixedSectionHeightCalculator {
+    /// 计算功能按钮区域的总高度（包含 padding）
+    static func actionButtonsHeight(screenWidth: CGFloat, screenHeight: CGFloat) -> CGFloat {
+        let buttonHeight = LayoutConstants.scaledWidth(LayoutConstants.ActionButton.height, screenWidth: screenWidth)
+        let bottomMargin = LayoutConstants.scaledHeight(LayoutConstants.ActionButton.bottomMargin, screenHeight: screenHeight)
+        
+        return buttonHeight + bottomMargin
+    }
+    /// 计算固定区域的理想总高度
+    static func idealFixedSectionHeight(screenWidth: CGFloat, screenHeight: CGFloat) -> CGFloat {
+        let topBarHeight = TopBar.totalHeight(screenWidth: screenWidth, screenHeight: screenHeight)
+        let petCardHeight = PetCard.totalHeightInMainView(screenWidth: screenWidth, screenHeight: screenHeight)
+        let buttonsHeight = actionButtonsHeight(screenWidth: screenWidth, screenHeight: screenHeight)
+        
+        return topBarHeight + petCardHeight + buttonsHeight
+    }
+}
 
 /// 顶部信息栏
 struct TopBar: View {
@@ -118,10 +138,21 @@ struct TopBar: View {
     let onAddDiamonds: () -> Void
     let screenWidth: CGFloat
     
+    /// 计算 TopBar 的总高度（包含 padding）
+    static func totalHeight(screenWidth: CGFloat, screenHeight: CGFloat) -> CGFloat {
+        // TopBar 内容高度：按钮高度 24
+        let contentHeight: CGFloat = LayoutConstants.scaledHeight(LayoutConstants.TopBar.buttonSize, screenHeight: screenHeight)
+        // 加上 padding
+        let topPadding = LayoutConstants.scaledHeight(LayoutConstants.TopBar.topMargin, screenHeight: screenHeight)
+        let bottomPadding = LayoutConstants.scaledHeight(LayoutConstants.TopBar.bottomMargin, screenHeight: screenHeight)
+        
+        return contentHeight + topPadding + bottomPadding
+    }
+    
     var body: some View {
         let iconSize: CGFloat = 14
         let fontSize: CGFloat = 13
-        let buttonSize: CGFloat = 20
+        let buttonSize: CGFloat = LayoutConstants.TopBar.buttonSize
         let spacing: CGFloat = 4
         
         HStack(alignment: .center,spacing: 8) {
