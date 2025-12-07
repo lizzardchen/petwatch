@@ -44,7 +44,8 @@ struct MainView: View {
                         screenWidth: screenWidth,
                         screenHeight: fixedSectionHeight)
                         .padding(.horizontal, LayoutConstants.scaledWidth(4, screenWidth: screenWidth))
-                        .padding(.bottom, LayoutConstants.scaledHeight(20, screenHeight: fixedSectionHeight))
+                        .padding(.top, LayoutConstants.scaledHeight(LayoutConstants.PetCard.topMargin, screenHeight: fixedSectionHeight))
+                        .padding(.bottom, LayoutConstants.scaledHeight(LayoutConstants.PetCard.bottomMargin, screenHeight: fixedSectionHeight))
                         
                         // 功能按钮
                         HStack(spacing: LayoutConstants.scaledWidth(LayoutConstants.ActionButton.buttonSpacing, screenWidth: screenWidth)) {
@@ -70,6 +71,7 @@ struct MainView: View {
                         .padding(.horizontal, LayoutConstants.scaledWidth(8, screenWidth: screenWidth))
                         .padding(.bottom, LayoutConstants.scaledHeight(LayoutConstants.ActionButton.bottomMargin, screenHeight: fixedSectionHeight))
                     }
+                    .ignoresSafeArea(edges: .top)
                     .frame(height: fixedSectionHeight)
                     
                     // 可滚动的底部区域（占据剩余65%）

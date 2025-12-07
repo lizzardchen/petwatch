@@ -15,24 +15,6 @@ struct LayoutConstants {
     /// 固定顶部区域高度比例（相对于整个Watch屏幕，根据Figma设计图精确测量）
     static let fixedSectionHeightRatio: CGFloat = 0.38
     
-    // MARK: - 固定区域内部高度分配（相对于固定区域总高度的比例）
-    struct FixedSectionLayout {
-        /// 顶部外边距（占固定区域的比例）
-        static let topMargin: CGFloat = 0.02
-        /// 顶部信息栏高度（占固定区域的比例）
-        static let topBarHeight: CGFloat = 0.16
-        /// 顶部信息栏到宠物卡片间距
-        static let topBarToCardSpacing: CGFloat = 0.02
-        /// 宠物状态卡片高度（占固定区域的比例）
-        static let petCardHeight: CGFloat = 0.54
-        /// 宠物卡片到功能按钮间距
-        static let cardToButtonSpacing: CGFloat = 0.02
-        /// 功能按钮高度（占固定区域的比例）
-        static let actionButtonHeight: CGFloat = 0.22
-        /// 底部外边距
-        static let bottomMargin: CGFloat = 0.02
-    }
-    
     // MARK: - 顶部信息栏（TopBar）
     struct TopBar {
         /// 水平内边距
@@ -50,13 +32,17 @@ struct LayoutConstants {
         /// 元素间距
         static let spacing: CGFloat = 4
         /// 顶部外边距
-        static let topMargin: CGFloat = 0
+        static let topMargin: CGFloat = 38
         /// 底部外边距
-        static let bottomMargin: CGFloat = 16
+        static let bottomMargin: CGFloat = 0
     }
     
     // MARK: - 宠物状态卡片（PetCard）
     struct PetCard {
+        /// 顶部外边距
+        static let topMargin: CGFloat = 14
+        /// 底部外边距
+        static let bottomMargin: CGFloat = 14
         /// 水平内边距
         static let horizontalPadding: CGFloat = 4
         /// 垂直内边距
