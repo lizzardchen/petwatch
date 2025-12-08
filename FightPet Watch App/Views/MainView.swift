@@ -13,10 +13,7 @@ struct MainView: View {
             let screenHeight = geometry.size.height
             let screenWidth = geometry.size.width
             let fixedSectionHeight = screenHeight * LayoutConstants.fixedSectionHeightRatio
-
-            let idealFixedHeight = FixedSectionHeightCalculator.idealFixedSectionHeight(screenWidth: screenWidth, screenHeight: fixedSectionHeight)
-            // 3. 滚动区域的高度 = 剩余屏幕高度 - 固定区域高度
-            let scrollSectionHeight = screenHeight - idealFixedHeight
+            let scrollSectionHeight = screenHeight - fixedSectionHeight
             
             ZStack {
                 // 背景渐变（覆盖整个界面）
@@ -28,51 +25,35 @@ struct MainView: View {
                 .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // 固定顶部区域（不滚动）- 根据实际内容自适应高度
+                    // 固定顶部区域 - 严格按比例分配
                     VStack(spacing: 0) {
-                        // 顶部信息栏
-                        TopBar(diamonds: gameState.player.diamonds,
-                               power: gameState.player.currentPet.power,
-                               onAddDiamonds: { showStore = true },
-                               screenWidth: screenWidth)
-                        .padding(.horizontal, LayoutConstants.scaledWidth(8, screenWidth: screenWidth))
-                        .padding(.top, LayoutConstants.scaledHeight(LayoutConstants.TopBar.topMargin, screenHeight: fixedSectionHeight))
-                        .padding(.bottom, LayoutConstants.scaledHeight(LayoutConstants.TopBar.bottomMargin, screenHeight: fixedSectionHeight))
+                        // TopBar: 25% of fixedSectionHeight
+                        TopBar(
+                            diamonds: gameState.player.diamonds,
+                            power: gameState.player.currentPet.power,
+                            onAddDiamonds: { showStore = true },
+                            screenWidth: screenWidth,
+                            allocatedHeight: fixedSectionHeight * LayoutConstants.FixedSectionLayout.topBarHeightRatio
+                        )
+                        .padding(.horizontal, screenWidth * 0.04)
                         
-                        // 宠物状态卡片
-                        PetCard(pet: gameState.player.currentPet,
-                               onRebirth: {
-                            showRebirth = true
-                        },
-                        screenWidth: screenWidth,
-                        screenHeight: fixedSectionHeight)
-                        .padding(.horizontal, LayoutConstants.scaledWidth(4, screenWidth: screenWidth))
-                        .padding(.top, LayoutConstants.scaledHeight(LayoutConstants.PetCard.topMargin, screenHeight: fixedSectionHeight))
-                        .padding(.bottom, LayoutConstants.scaledHeight(LayoutConstants.PetCard.bottomMargin, screenHeight: fixedSectionHeight))
+                        // PetCard: 60% of fixedSectionHeight
+                        PetCard(
+                            pet: gameState.player.currentPet,
+                            onRebirth: { showRebirth = true },
+                            screenWidth: screenWidth,
+                            allocatedHeight: fixedSectionHeight * LayoutConstants.FixedSectionLayout.petCardHeightRatio
+                        )
+                        .padding(.horizontal, screenWidth * 0.02)
                         
-                        // 功能按钮
-                        HStack(spacing: LayoutConstants.scaledWidth(LayoutConstants.ActionButton.buttonSpacing, screenWidth: screenWidth)) {
-                            GradientButton(title: "排行榜",
-                                         icon: "🏆",
-                                         gradient: LinearGradient(
-                                            colors: [Color(red: 0.7, green: 0.4, blue: 0.4),
-                                                    Color(red: 0.6, green: 0.3, blue: 0.5)],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                         ),
-                                         screenWidth: screenWidth) {
-                                showRanking = true
-                            }
-                            
-                            GradientButton(title: "运动",
-                                         icon: "🏃",
-                                         gradient: Constants.Colors.blueGradient,
-                                         screenWidth: screenWidth) {
-                                showActivity = true
-                            }
-                        }
-                        .padding(.horizontal, LayoutConstants.scaledWidth(8, screenWidth: screenWidth))
-                        .padding(.bottom, LayoutConstants.scaledHeight(LayoutConstants.ActionButton.bottomMargin, screenHeight: fixedSectionHeight))
+                        // ActionButtons: 15% of fixedSectionHeight
+                        ActionButtonsView(
+                            screenWidth: screenWidth,
+                            allocatedHeight: fixedSectionHeight * LayoutConstants.FixedSectionLayout.actionButtonsHeightRatio,
+                            onRanking: { showRanking = true },
+                            onActivity: { showActivity = true }
+                        )
+                        .padding(.horizontal, screenWidth * 0.04)
                     }
                     .ignoresSafeArea(edges: .top)
                     .frame(height: fixedSectionHeight)
@@ -112,22 +93,46 @@ struct MainView: View {
         }
     }
 }
-/// 辅助结构：计算固定区域各部分的高度
-struct FixedSectionHeightCalculator {
-    /// 计算功能按钮区域的总高度（包含 padding）
-    static func actionButtonsHeight(screenWidth: CGFloat, screenHeight: CGFloat) -> CGFloat {
-        let buttonHeight = LayoutConstants.scaledWidth(LayoutConstants.ActionButton.height, screenWidth: screenWidth)
-        let bottomMargin = LayoutConstants.scaledHeight(LayoutConstants.ActionButton.bottomMargin, screenHeight: screenHeight)
+/// 功能按钮区域
+struct ActionButtonsView: View {
+    let screenWidth: CGFloat
+    let allocatedHeight: CGFloat
+    let onRanking: () -> Void
+    let onActivity: () -> Void
+    
+    var body: some View {
+        let buttonHeight = allocatedHeight * LayoutConstants.FixedSectionLayout.ActionButtons.buttonHeightRatio
+        let bottomMargin = allocatedHeight * LayoutConstants.FixedSectionLayout.ActionButtons.bottomMarginRatio
         
-        return buttonHeight + bottomMargin
-    }
-    /// 计算固定区域的理想总高度
-    static func idealFixedSectionHeight(screenWidth: CGFloat, screenHeight: CGFloat) -> CGFloat {
-        let topBarHeight = TopBar.totalHeight(screenWidth: screenWidth, screenHeight: screenHeight)
-        let petCardHeight = PetCard.totalHeightInMainView(screenWidth: screenWidth, screenHeight: screenHeight)
-        let buttonsHeight = actionButtonsHeight(screenWidth: screenWidth, screenHeight: screenHeight)
-        
-        return topBarHeight + petCardHeight + buttonsHeight
+        HStack(spacing: screenWidth * 0.04) {
+            GradientButton(
+                title: "排行榜",
+                icon: "🏆",
+                gradient: LinearGradient(
+                    colors: [Color(red: 0.7, green: 0.4, blue: 0.4),
+                            Color(red: 0.6, green: 0.3, blue: 0.5)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ),
+                screenWidth: screenWidth,
+                height: buttonHeight
+            ) {
+                onRanking()
+            }
+            
+            GradientButton(
+                title: "运动",
+                icon: "🏃",
+                gradient: Constants.Colors.blueGradient,
+                screenWidth: screenWidth,
+                height: buttonHeight
+            ) {
+                onActivity()
+            }
+        }
+        .frame(height: buttonHeight)         // 限制按钮高度
+        .padding(.bottom, bottomMargin)      // 加上底部margin
+        .frame(height: allocatedHeight)      // 最外层严格限制总高度
     }
 }
 
@@ -137,27 +142,20 @@ struct TopBar: View {
     let power: Int
     let onAddDiamonds: () -> Void
     let screenWidth: CGFloat
-    
-    /// 计算 TopBar 的总高度（包含 padding）
-    static func totalHeight(screenWidth: CGFloat, screenHeight: CGFloat) -> CGFloat {
-        // TopBar 内容高度：按钮高度 24
-        let contentHeight: CGFloat = LayoutConstants.scaledHeight(LayoutConstants.TopBar.buttonSize, screenHeight: screenHeight)
-        // 加上 padding
-        let topPadding = LayoutConstants.scaledHeight(LayoutConstants.TopBar.topMargin, screenHeight: screenHeight)
-        let bottomPadding = LayoutConstants.scaledHeight(LayoutConstants.TopBar.bottomMargin, screenHeight: screenHeight)
-        
-        return contentHeight + topPadding + bottomPadding
-    }
+    let allocatedHeight: CGFloat  // 新增：分配给TopBar的高度
     
     var body: some View {
-        let iconSize: CGFloat = 14
-        let fontSize: CGFloat = 13
-        let buttonSize: CGFloat = LayoutConstants.TopBar.buttonSize
-        let spacing: CGFloat = 4
+        // 基于 allocatedHeight 计算所有内部尺寸
+        let topPadding = allocatedHeight * LayoutConstants.FixedSectionLayout.TopBar.topPaddingRatio
+        let contentHeight = allocatedHeight * LayoutConstants.FixedSectionLayout.TopBar.contentHeightRatio
+        let buttonSize = contentHeight * LayoutConstants.FixedSectionLayout.TopBar.buttonSizeRatio
+        let fontSize: CGFloat = buttonSize * 0.65
+        let iconSize: CGFloat = buttonSize * 0.7
+        let spacing: CGFloat = screenWidth * 0.02
         
-        HStack(alignment: .center,spacing: 8) {
+        HStack(alignment: .center, spacing: 8) {
             // 钻石（无背景）
-            HStack(alignment: .center,spacing: spacing) {
+            HStack(alignment: .center, spacing: spacing) {
                 Text("💎")
                     .font(.system(size: iconSize))
                 Text("\(diamonds)")
@@ -167,7 +165,7 @@ struct TopBar: View {
                     .minimumScaleFactor(0.7)
                     .fixedSize(horizontal: true, vertical: false)
                 
-                // 使用 ZStack 确保按钮在最上层
+                // 加号按钮
                 Image(systemName: "plus.circle.fill")
                     .font(.system(size: buttonSize))
                     .foregroundColor(.cyan)
@@ -176,24 +174,16 @@ struct TopBar: View {
                     .onTapGesture {
                         onAddDiamonds()
                     }
-                    .zIndex(999)  // 确保在最上层
+                    .zIndex(999)
             }
-            //.border(Color.green, width: 2)  // 左侧 HStack 的边界
-            .fixedSize()  // 防止 HStack 扩展
+            .fixedSize()
             
             Spacer()
-            
-            // 战力（无背景）
-            // HStack(alignment: .center,spacing: spacing) {
-            //     Text("⚡")
-            //         .font(.system(size: iconSize))
-            //     Text("战力 \(power)")
-            //         .font(.system(size: fontSize, weight: .semibold))
-            //         .foregroundColor(.white)
-            // }
-            // .border(Color.green, width: 2)  // 左侧 HStack 的边界
         }
-        .zIndex(100)  // 确保整个 TopBar 在其他视图之上
+        .frame(height: contentHeight)       // 限制内容区高度
+        .padding(.top, topPadding)           // 加上顶部padding
+        .frame(height: allocatedHeight)      // 最外层严格限制总高度
+        .zIndex(100)
     }
 }
 

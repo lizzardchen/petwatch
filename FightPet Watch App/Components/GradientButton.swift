@@ -7,34 +7,42 @@ struct GradientButton: View {
     let gradient: LinearGradient
     let action: () -> Void
     let screenWidth: CGFloat
+    let height: CGFloat  // 新增：明确的高度参数
     
     init(title: String,
          icon: String? = nil,
          gradient: LinearGradient = Constants.Colors.redGradient,
          screenWidth: CGFloat = 200,
+         height: CGFloat? = nil,  // 可选参数，兼容旧代码
          action: @escaping () -> Void) {
         self.title = title
         self.icon = icon
         self.gradient = gradient
         self.screenWidth = screenWidth
+        // 如果没有传入height，使用旧的计算方式作为默认值
+        self.height = height ?? LayoutConstants.scaledWidth(LayoutConstants.ActionButton.height, screenWidth: screenWidth)
         self.action = action
     }
     
     var body: some View {
+        let iconSize = height * 0.5
+        let fontSize = height * 0.45
+        let cornerRadius = screenWidth * 0.04
+        
         Button(action: action) {
-            HStack(spacing: LayoutConstants.scaledWidth(LayoutConstants.ActionButton.iconTextSpacing, screenWidth: screenWidth)) {
+            HStack(spacing: screenWidth * 0.02) {
                 if let icon = icon {
                     Text(icon)
-                        .font(.system(size: LayoutConstants.scaledWidth(LayoutConstants.ActionButton.iconSize, screenWidth: screenWidth)))
+                        .font(.system(size: iconSize))
                 }
                 Text(title)
-                    .font(.system(size: LayoutConstants.scaledWidth(LayoutConstants.ActionButton.fontSize, screenWidth: screenWidth), weight: .semibold))
+                    .font(.system(size: fontSize, weight: .semibold))
             }
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .frame(height: LayoutConstants.scaledWidth(LayoutConstants.ActionButton.height, screenWidth: screenWidth))
+            .frame(height: height)
             .background(gradient)
-            .cornerRadius(LayoutConstants.scaledWidth(LayoutConstants.ActionButton.cornerRadius, screenWidth: screenWidth))
+            .cornerRadius(cornerRadius)
         }
         .buttonStyle(.plain)
     }

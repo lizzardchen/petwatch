@@ -153,6 +153,42 @@ struct LayoutConstants {
         static let itemCardSpacing: CGFloat = 12
     }
     
+    // MARK: - 固定区域布局比例
+    /// 固定区域内各组件的高度分配和内部布局比例
+    struct FixedSectionLayout {
+        /// TopBar 占固定区域的高度比例
+        static let topBarHeightRatio: CGFloat = 0.25
+        
+        /// PetCard 占固定区域的高度比例
+        static let petCardHeightRatio: CGFloat = 0.60
+        
+        /// ActionButtons 占固定区域的高度比例
+        static let actionButtonsHeightRatio: CGFloat = 0.15
+        
+        // TopBar 内部布局比例
+        struct TopBar {
+            static let topPaddingRatio: CGFloat = 0.45      // 顶部留白占45%
+            static let contentHeightRatio: CGFloat = 0.55   // 内容区占55%
+            static let buttonSizeRatio: CGFloat = 0.7       // 按钮占内容区70%
+        }
+        
+        // PetCard 内部布局比例
+        struct PetCard {
+            static let verticalMarginRatio: CGFloat = 0.10  // 上下margin各10%
+            static let contentHeightRatio: CGFloat = 0.80   // 内容区80%
+            static let innerPaddingRatio: CGFloat = 0.02    // 内部padding 2%
+            static let firstRowHeightRatio: CGFloat = 0.45  // 第一行45%
+            static let secondRowHeightRatio: CGFloat = 0.45 // 第二行45%
+            static let rowSpacingRatio: CGFloat = 0.10      // 行间距10%
+        }
+        
+        // ActionButtons 内部布局比例
+        struct ActionButtons {
+            static let buttonHeightRatio: CGFloat = 0.80    // 按钮占80%
+            static let bottomMarginRatio: CGFloat = 0.20    // 底部留白20%
+        }
+    }
+    
     // MARK: - 辅助函数：根据基准尺寸计算当前尺寸
     /// 根据屏幕宽度缩放
     static func scaledWidth(_ value: CGFloat, screenWidth: CGFloat) -> CGFloat {
