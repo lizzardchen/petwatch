@@ -25,8 +25,8 @@ struct GradientButton: View {
     }
     
     var body: some View {
-        let iconSize = height * 0.5
-        let fontSize = height * 0.45
+        let iconSize = height * 0.6
+        let fontSize = height * 0.6
         let cornerRadius = screenWidth * 0.04
         
         Button(action: action) {

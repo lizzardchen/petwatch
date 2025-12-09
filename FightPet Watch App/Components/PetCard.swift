@@ -22,10 +22,10 @@ struct PetCard: View {
         let cornerRadius = screenWidth * 0.04
         
         // 字体大小基于行高计算
-        let levelFontSize = firstRowHeight * 0.5
-        let expFontSize = firstRowHeight * 0.45
-        let statFontSize = secondRowHeight * 0.45
-        let iconSize = secondRowHeight * 0.45
+        let levelFontSize = firstRowHeight * 0.55
+        let expFontSize = firstRowHeight * 0.55
+        let statFontSize = secondRowHeight * 0.55
+        let iconSize = secondRowHeight * 0.55
         
         VStack(alignment: .center, spacing: rowSpacing) {
             // 第1行：等级 + 经验值 + 重生按钮

@@ -33,11 +33,11 @@ struct MainView: View {
                     // 固定顶部区域
                     ZStack {
                         // 蓝框：显示固定区域的完整范围（包含安全区域）
-                        Rectangle()
-                            .stroke(Color.blue, lineWidth: 2)
-                            .frame(height: fixedSectionHeight)
-                            .frame(maxWidth: .infinity, alignment: .top)
-                            .ignoresSafeArea(edges: .top)
+                        // Rectangle()
+                        //     .stroke(Color.blue, lineWidth: 2)
+                        //     .frame(height: fixedSectionHeight)
+                        //     .frame(maxWidth: .infinity, alignment: .top)
+                        //     .ignoresSafeArea(edges: .top)
                         
                         VStack(spacing: 0) {
                             // TopBar: 25% of fixedSectionHeight
@@ -179,6 +179,7 @@ struct ActionButtonsView: View {
     
     var body: some View {
         let buttonHeight = allocatedHeight * LayoutConstants.FixedSectionLayout.ActionButtons.buttonHeightRatio
+        let topMargin = allocatedHeight * LayoutConstants.FixedSectionLayout.ActionButtons.topMarginRatio
         let bottomMargin = allocatedHeight * LayoutConstants.FixedSectionLayout.ActionButtons.bottomMarginRatio
         
         HStack(spacing: screenWidth * 0.04) {
@@ -208,6 +209,7 @@ struct ActionButtonsView: View {
             }
         }
         .frame(height: buttonHeight)         // 限制按钮高度
+        .padding(.top, topMargin)            // 加上顶部margin
         .padding(.bottom, bottomMargin)      // 加上底部margin
         .frame(height: allocatedHeight)      // 最外层严格限制总高度
     }
@@ -225,9 +227,10 @@ struct TopBar: View {
         // 基于 allocatedHeight 计算所有内部尺寸
         let topPadding = allocatedHeight * LayoutConstants.FixedSectionLayout.TopBar.topPaddingRatio
         let contentHeight = allocatedHeight * LayoutConstants.FixedSectionLayout.TopBar.contentHeightRatio
+        let bottomPadding = allocatedHeight * LayoutConstants.FixedSectionLayout.TopBar.bottomPaddingRatio
         let buttonSize = contentHeight * LayoutConstants.FixedSectionLayout.TopBar.buttonSizeRatio
-        let fontSize: CGFloat = buttonSize * 0.65
-        let iconSize: CGFloat = buttonSize * 0.7
+        let fontSize: CGFloat = buttonSize * 0.7
+        let iconSize: CGFloat = buttonSize * 0.9
         let spacing: CGFloat = screenWidth * 0.02
         
         HStack(alignment: .center, spacing: 8) {
@@ -259,6 +262,7 @@ struct TopBar: View {
         }
         .frame(height: contentHeight)       // 限制内容区高度
         .padding(.top, topPadding)           // 加上顶部padding
+        .padding(.bottom, bottomPadding)     // 加上底部padding
         .frame(height: allocatedHeight)      // 最外层严格限制总高度
         .zIndex(100)
     }
