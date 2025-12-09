@@ -93,8 +93,9 @@ struct MainView: View {
                         }
                     }
                     .frame(height: scrollSectionHeight)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     .offset(y: fixedSectionHeight)
+                    .ignoresSafeArea(edges: .top)
                 }
                 
                 // 临时调试信息显示
