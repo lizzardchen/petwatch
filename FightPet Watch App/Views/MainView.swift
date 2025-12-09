@@ -28,14 +28,15 @@ struct MainView: View {
                 )
                 .ignoresSafeArea()
                 
-                VStack(spacing: 0) {
-                    // 固定顶部区域 - 严格按比例分配
+                // 使用 ZStack 进行绝对定位，而不是 VStack
+                ZStack(alignment: .top) {
+                    // 固定顶部区域
                     ZStack {
                         // 蓝框：显示固定区域的完整范围（包含安全区域）
                         Rectangle()
                             .stroke(Color.blue, lineWidth: 2)
                             .frame(height: fixedSectionHeight)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                            .frame(maxWidth: .infinity, alignment: .top)
                             .ignoresSafeArea(edges: .top)
                         
                         VStack(spacing: 0) {
@@ -70,9 +71,10 @@ struct MainView: View {
                         .ignoresSafeArea(edges: .top)
                     }
                     .frame(height: fixedSectionHeight)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     .ignoresSafeArea(edges: .top)
                     
-                    // 可滚动的底部区域（占据剩余高度）
+                    // 可滚动的底部区域 - 定位在固定区域下方
                     ScrollView {
                         VStack(spacing: scrollSectionHeight * 0.08) {
                             PetDisplayView(pet: gameState.player.currentPet,
@@ -91,7 +93,8 @@ struct MainView: View {
                         }
                     }
                     .frame(height: scrollSectionHeight)
-                    .ignoresSafeArea(edges: .top)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    .offset(y: fixedSectionHeight)
                 }
                 
                 // 临时调试信息显示
