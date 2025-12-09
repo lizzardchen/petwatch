@@ -272,52 +272,119 @@ struct TopBar: View {
 struct PetDisplayView: View {
     let pet: Pet
     let screenWidth: CGFloat
+    @State private var isEditingName = false
+    @State private var editingName = ""
+    @EnvironmentObject var gameState: GameStateManager
     
     var body: some View {
         VStack(spacing: 16) {
             // 宠物头像
             Text(pet.emoji)
-                .font(.system(size: 80))
+                .font(.system(size: 64))
             
-            // 宠物名称（带编辑图标）
-            HStack(spacing: 4) {
-                Text(pet.name)
-                    .font(.system(size: Constants.FontSize.large, weight: .semibold))
-                    .foregroundColor(.white)
-                
-                Image(systemName: "pencil")
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.7))
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 8)
-            .background(Constants.Colors.purple.opacity(0.6))
-            .cornerRadius(20)
-            
-            // 快乐和亲密值
-            HStack(spacing: 20) {
-                HStack(spacing: 4) {
-                    Text("✨")
-                    Text("快乐: \(pet.happiness)")
-                        .font(.system(size: Constants.FontSize.small))
+            // 宠物名称（带编辑功能）
+            if isEditingName {
+                // 编辑模式
+                HStack(spacing: 8) {
+                    TextField("", text: $editingName)
+                        .font(.system(size: Constants.FontSize.large, weight: .semibold))
                         .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .textFieldStyle(.plain)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Constants.Colors.purple.opacity(0.8))
+                        .cornerRadius(20)
+                    
+                    // 确认按钮
+                    Button(action: {
+                        if !editingName.isEmpty {
+                            gameState.updatePetName(editingName)
+                        }
+                        isEditingName = false
+                    }) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.green)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    // 取消按钮
+                    Button(action: {
+                        editingName = pet.name
+                        isEditingName = false
+                    }) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.red)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 12)
+            } else {
+                // 显示模式
+                HStack(spacing: 4) {
+                    Text(pet.name)
+                        .font(.system(size: Constants.FontSize.large, weight: .semibold))
+                        .foregroundColor(.white)
+                    
+                    Button(action: {
+                        editingName = pet.name
+                        isEditingName = true
+                    }) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
+                .background(Constants.Colors.purple.opacity(0.6))
+                .cornerRadius(20)
+            }
+            
+            // 战力和属性（匹配设计图）
+            VStack(spacing: 8) {
+                // PWR 战力
+                HStack {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.orange)
+                    Text("PWR: \(pet.power)")
+                        .font(.system(size: Constants.FontSize.large, weight: .bold))
+                        .foregroundColor(.orange)
                 }
                 
-                HStack(spacing: 4) {
-                    Text("❤️")
-                    Text("亲密: \(pet.intimacy)")
-                        .font(.system(size: Constants.FontSize.small))
-                        .foregroundColor(.white)
+                // 快乐值和亲密值
+                HStack(spacing: 20) {
+                    HStack(spacing: 4) {
+                        Text("✨")
+                            .font(.system(size: 16))
+                        Text("\(pet.happiness)")
+                            .font(.system(size: Constants.FontSize.medium, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    
+                    HStack(spacing: 4) {
+                        Text("❤️")
+                            .font(.system(size: 16))
+                        Text("\(pet.intimacy)")
+                            .font(.system(size: Constants.FontSize.medium, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
                 }
             }
-            
-            // 三维属性
-            VStack(spacing: 4) {
-                StatDisplay(icon: "🧠", name: "智慧", value: pet.intelligence, color: .purple)
-                StatDisplay(icon: "💪", name: "体力", value: pet.stamina, color: .green)
-                StatDisplay(icon: "⚡", name: "敏捷", value: pet.agility, color: .blue)
-            }
-            .background(Constants.Colors.darkGray.opacity(0.5))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(
+                LinearGradient(
+                    colors: [Constants.Colors.purple.opacity(0.4), Constants.Colors.pink.opacity(0.4)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
             .cornerRadius(12)
         }
     }

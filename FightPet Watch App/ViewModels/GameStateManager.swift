@@ -72,4 +72,10 @@ class GameStateManager: ObservableObject {
     func getUpgradeItem(type: UpgradeItemType) -> UpgradeItem? {
         return player.upgradeItems.first { $0.type == type }
     }
+    
+    /// 更新宠物名称
+    func updatePetName(_ newName: String) {
+        player.currentPet.name = newName
+        savePlayer()
+    }
 }
