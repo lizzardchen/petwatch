@@ -124,7 +124,7 @@ struct PetCard: View {
 #Preview {
     PetCard(pet: .preview, 
             screenWidth: 184,  // 典型的 Apple Watch 宽度
-            screenHeight: 224) // 典型的 Apple Watch 高度
+            allocatedHeight: 224 * 0.6) // 典型的 Apple Watch 高度的60%
         .padding()
         .background(
             LinearGradient(
