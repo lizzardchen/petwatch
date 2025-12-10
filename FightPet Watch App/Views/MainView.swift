@@ -91,7 +91,7 @@ struct MainView: View {
                             PetDisplayView(pet: gameState.player.currentPet,
                                          screenWidth: screenWidth)
                                 .padding(.horizontal, screenWidth * 0.04)
-                                .padding(.top, scrollSectionHeight * 0.08)
+                                .padding(.top, scrollSectionHeight * 0.02)  // 减小顶部间距
                             
                             // 小窝升级部分
                             UpgradeOptionsView(
@@ -289,12 +289,12 @@ struct PetDisplayView: View {
     
     var body: some View {
         // 基于屏幕宽度计算字体大小，以匹配设计图比例
-        let nameFontSize = screenWidth * 0.08  // ~15pt for 184px width
-        let pwrFontSize = screenWidth * 0.09   // ~16pt for 184px width
-        let statFontSize = screenWidth * 0.065 // ~12pt for 184px width
+        let nameFontSize = screenWidth * 0.06  // ~15pt for 184px width
+        let pwrFontSize = screenWidth * 0.065   // ~16pt for 184px width
+        let statFontSize = screenWidth * 0.06 // ~12pt for 184px width
         let iconSize = screenWidth * 0.075     // ~14pt for 184px width
         
-        VStack(spacing: 16) {
+        VStack(spacing: 4) {  // 进一步减小内部间距到4
             // 宠物头像
             Text(pet.emoji)
                 .font(.system(size: 64))
@@ -363,14 +363,14 @@ struct PetDisplayView: View {
             }
             
             // 战力和属性（匹配设计图）
-            VStack(spacing: 8) {
+            VStack(spacing: 6) {  // 减小内部间距
                 // PWR 战力
                 HStack {
                     Image(systemName: "bolt.fill")
                         .font(.system(size: iconSize))
                         .foregroundColor(.orange)
                     Text("PWR: \(pet.power)")
-                        .font(.system(size: pwrFontSize, weight: .bold))
+                        .font(.system(size: pwrFontSize, weight: .semibold))
                         .foregroundColor(.orange)
                 }
                 
@@ -394,14 +394,14 @@ struct PetDisplayView: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(
-                LinearGradient(
-                    colors: [Constants.Colors.purple.opacity(0.4), Constants.Colors.pink.opacity(0.4)],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
+            .padding(.vertical, 8)  // 减小垂直padding
+//            .background(
+//                LinearGradient(
+//                    colors: [Constants.Colors.purple.opacity(0.4), Constants.Colors.pink.opacity(0.4)],
+//                    startPoint: .leading,
+//                    endPoint: .trailing
+//                )
+//            )
             .cornerRadius(12)
         }
     }
