@@ -13,7 +13,9 @@ struct LayoutConstants {
     
     // MARK: - 固定顶部区域
     /// 固定顶部区域高度比例（相对于整个Watch屏幕，根据Figma设计图精确测量）
-    static let fixedSectionHeightRatio: CGFloat = 0.38
+    static let fixedSectionHeightRatio: CGFloat = 0.37
+    static let fixedTopMarginRatio: CGFloat = 0.03
+    static let fixedBottomMarginRatio: CGFloat = 0.01
     
     // MARK: - 顶部信息栏（TopBar）
     struct TopBar {
@@ -167,9 +169,9 @@ struct LayoutConstants {
         
         // TopBar 内部布局比例
         struct TopBar {
-            static let topPaddingRatio: CGFloat = 0.35      // 顶部留白占35%
-            static let contentHeightRatio: CGFloat = 0.60   // 内容区占55%
-            static let bottomPaddingRatio: CGFloat = 0.05      // 顶部留白占5%
+            static let topPaddingRatio: CGFloat = 0.20      // 顶部留白占35%
+            static let contentHeightRatio: CGFloat = 0.75   // 内容区占55%
+            static let bottomPaddingRatio: CGFloat = 0.10   // 顶部留白占5%
             static let buttonSizeRatio: CGFloat = 0.8       // 按钮占内容区80%
         }
         
@@ -186,8 +188,8 @@ struct LayoutConstants {
         // ActionButtons 内部布局比例
         struct ActionButtons {
             static let buttonHeightRatio: CGFloat = 0.80    // 按钮占80%
-            static let topMarginRatio:CGFloat = 0.10        //top留白10%
-            static let bottomMarginRatio: CGFloat = 0.10    // 底部留白20%
+            static let topMarginRatio:CGFloat = 0.15        //top留白10%
+            static let bottomMarginRatio: CGFloat = 0.15    // 底部留白20%
         }
     }
     

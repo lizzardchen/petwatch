@@ -16,7 +16,12 @@ struct MainView: View {
                                   geometry.safeAreaInsets.top + 
                                   geometry.safeAreaInsets.bottom
             let screenWidth = geometry.size.width
-            let fixedSectionHeight = fullScreenHeight * LayoutConstants.fixedSectionHeightRatio
+            let topSafeMargin = fullScreenHeight * LayoutConstants.fixedTopMarginRatio
+            let bottomSafeMargin = fullScreenHeight * LayoutConstants.fixedBottomMarginRatio
+            // 基础固定区域高度（用于计算各组件的分配高度）
+            let baseFixedSectionHeight = fullScreenHeight * LayoutConstants.fixedSectionHeightRatio
+            // 实际固定区域高度（增加了 topSafeMargin）
+            let fixedSectionHeight = baseFixedSectionHeight + topSafeMargin + bottomSafeMargin
             let scrollSectionHeight = fullScreenHeight - fixedSectionHeight
             
             ZStack {
@@ -40,33 +45,39 @@ struct MainView: View {
                         //     .ignoresSafeArea(edges: .top)
                         
                         VStack(spacing: 0) {
-                            // TopBar: 25% of fixedSectionHeight
+                            // 添加 Spacer 填充增加的空间（在顶部）
+                            Spacer(minLength: topSafeMargin)
+                            
+                            // TopBar: 25% of baseFixedSectionHeight
                             TopBar(
                                 diamonds: gameState.player.diamonds,
                                 power: gameState.player.currentPet.power,
                                 onAddDiamonds: { showStore = true },
                                 screenWidth: screenWidth,
-                                allocatedHeight: fixedSectionHeight * LayoutConstants.FixedSectionLayout.topBarHeightRatio
+                                allocatedHeight: baseFixedSectionHeight * LayoutConstants.FixedSectionLayout.topBarHeightRatio
                             )
                             .padding(.horizontal, screenWidth * 0.04)
                             
-                            // PetCard: 60% of fixedSectionHeight
+                            // PetCard: 60% of baseFixedSectionHeight
                             PetCard(
                                 pet: gameState.player.currentPet,
                                 onRebirth: { showRebirth = true },
                                 screenWidth: screenWidth,
-                                allocatedHeight: fixedSectionHeight * LayoutConstants.FixedSectionLayout.petCardHeightRatio
+                                allocatedHeight: baseFixedSectionHeight * LayoutConstants.FixedSectionLayout.petCardHeightRatio
                             )
                             .padding(.horizontal, screenWidth * 0.02)
                             
-                            // ActionButtons: 15% of fixedSectionHeight
+                            // ActionButtons: 15% of baseFixedSectionHeight
                             ActionButtonsView(
                                 screenWidth: screenWidth,
-                                allocatedHeight: fixedSectionHeight * LayoutConstants.FixedSectionLayout.actionButtonsHeightRatio,
+                                allocatedHeight: baseFixedSectionHeight * LayoutConstants.FixedSectionLayout.actionButtonsHeightRatio,
                                 onRanking: { showRanking = true },
                                 onActivity: { showActivity = true }
                             )
                             .padding(.horizontal, screenWidth * 0.04)
+                        
+                            // 添加 Spacer 填充增加的空间（在顶部）
+                            Spacer(minLength: bottomSafeMargin)
                         }
                         .ignoresSafeArea(edges: .top)
                     }
@@ -277,6 +288,12 @@ struct PetDisplayView: View {
     @EnvironmentObject var gameState: GameStateManager
     
     var body: some View {
+        // 基于屏幕宽度计算字体大小，以匹配设计图比例
+        let nameFontSize = screenWidth * 0.08  // ~15pt for 184px width
+        let pwrFontSize = screenWidth * 0.09   // ~16pt for 184px width
+        let statFontSize = screenWidth * 0.065 // ~12pt for 184px width
+        let iconSize = screenWidth * 0.075     // ~14pt for 184px width
+        
         VStack(spacing: 16) {
             // 宠物头像
             Text(pet.emoji)
@@ -287,7 +304,7 @@ struct PetDisplayView: View {
                 // 编辑模式
                 HStack(spacing: 8) {
                     TextField("", text: $editingName)
-                        .font(.system(size: Constants.FontSize.large, weight: .semibold))
+                        .font(.system(size: nameFontSize, weight: .semibold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .textFieldStyle(.plain)
@@ -326,7 +343,7 @@ struct PetDisplayView: View {
                 // 显示模式
                 HStack(spacing: 4) {
                     Text(pet.name)
-                        .font(.system(size: Constants.FontSize.large, weight: .semibold))
+                        .font(.system(size: nameFontSize, weight: .semibold))
                         .foregroundColor(.white)
                     
                     Button(action: {
@@ -350,10 +367,10 @@ struct PetDisplayView: View {
                 // PWR 战力
                 HStack {
                     Image(systemName: "bolt.fill")
-                        .font(.system(size: 16))
+                        .font(.system(size: iconSize))
                         .foregroundColor(.orange)
                     Text("PWR: \(pet.power)")
-                        .font(.system(size: Constants.FontSize.large, weight: .bold))
+                        .font(.system(size: pwrFontSize, weight: .bold))
                         .foregroundColor(.orange)
                 }
                 
@@ -361,17 +378,17 @@ struct PetDisplayView: View {
                 HStack(spacing: 20) {
                     HStack(spacing: 4) {
                         Text("✨")
-                            .font(.system(size: 16))
+                            .font(.system(size: iconSize))
                         Text("\(pet.happiness)")
-                            .font(.system(size: Constants.FontSize.medium, weight: .semibold))
+                            .font(.system(size: statFontSize, weight: .semibold))
                             .foregroundColor(.white)
                     }
                     
                     HStack(spacing: 4) {
                         Text("❤️")
-                            .font(.system(size: 16))
+                            .font(.system(size: iconSize))
                         Text("\(pet.intimacy)")
-                            .font(.system(size: Constants.FontSize.medium, weight: .semibold))
+                            .font(.system(size: statFontSize, weight: .semibold))
                             .foregroundColor(.white)
                     }
                 }
