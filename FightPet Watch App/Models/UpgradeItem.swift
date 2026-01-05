@@ -84,6 +84,12 @@ struct UpgradeItem: Identifiable, Codable {
     func canUpgrade() -> Bool {
         return level < maxLevel
     }
+    
+    /// 经验加成（根据等级提供，所有建筑都提供经验加成）
+    func expBonus() -> Int {
+        guard isUnlocked else { return 0 }
+        return level * 1  // 每级+1经验/分钟
+    }
 }
 
 // MARK: - Preview Data

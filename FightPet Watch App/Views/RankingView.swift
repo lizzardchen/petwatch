@@ -3,6 +3,7 @@ import SwiftUI
 /// 排行榜界面
 struct RankingView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var gameState: GameStateManager
     @State private var showOpponentSelection = false
     @State private var dailyChallenges = 3
     
@@ -68,18 +69,34 @@ struct RankingView: View {
                 }
                 .padding()
                 
+                // 快乐值不足提示
+                if !gameState.canBattle() {
+                    HStack(spacing: 6) {
+                        Text("⚠️")
+                        Text("快乐值低于30，无法参与战斗")
+                            .font(.system(size: Constants.FontSize.small))
+                    }
+                    .foregroundColor(.orange)
+                    .padding(.horizontal)
+                }
+                
                 // 随机挑战按钮
                 GradientButton(
-                    title: "随机挑战",
+                    title: gameState.canBattle() ? "随机挑战" : "快乐值不足",
                     icon: "⚔️",
                     gradient: LinearGradient(
-                        colors: [Color.red, Color.red.opacity(0.8)],
+                        colors: gameState.canBattle() 
+                            ? [Color.red, Color.red.opacity(0.8)]
+                            : [Color.gray, Color.gray.opacity(0.8)],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
                 ) {
-                    showOpponentSelection = true
+                    if gameState.canBattle() {
+                        showOpponentSelection = true
+                    }
                 }
+                .disabled(!gameState.canBattle())
                 .padding(.horizontal)
                 .padding(.bottom, 20)
             }
@@ -281,4 +298,5 @@ struct OpponentCard: View {
 
 #Preview {
     RankingView()
+        .environmentObject(GameStateManager())
 }

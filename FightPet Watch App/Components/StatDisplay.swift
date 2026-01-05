@@ -31,7 +31,7 @@ struct StatDisplay: View {
     VStack(spacing: 4) {
         StatDisplay(icon: "🧠", name: "智慧", value: 11, color: .purple)
         StatDisplay(icon: "💪", name: "体力", value: 11, color: .green)
-        StatDisplay(icon: "⚡", name: "敏捷", value: 11, color: .blue)
+        StatDisplay(icon: "💪", name: "力量", value: 11, color: .blue)
     }
     .background(Constants.Colors.darkGray.opacity(0.5))
     .cornerRadius(12)
