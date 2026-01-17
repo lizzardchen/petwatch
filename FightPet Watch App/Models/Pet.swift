@@ -145,6 +145,47 @@ struct Pet: Identifiable, Codable {
     mutating func increaseHappiness(_ amount: Int) {
         happiness = min(100, happiness + amount)
     }
+    
+    // MARK: - 战斗属性计算
+    // 根据三围计算战斗属性
+    
+    /// 攻击力 = 力量 × 2
+    var attack: Int {
+        return strength * 2
+    }
+    
+    /// HP = 体力 × 15
+    var hp: Int {
+        return stamina * 15
+    }
+    
+    /// 防御力 = 体力 × 0.5
+    var defense: Double {
+        return Double(stamina) * 0.5
+    }
+    
+    /// 暴击率 = min(30, 智力 × 0.5)，上限30%
+    var critRate: Double {
+        return min(30.0, Double(intelligence) * 0.5)
+    }
+    
+    /// 速度 = 智力 × 0.2
+    var speed: Double {
+        return Double(intelligence) * 0.2
+    }
+    
+    /// 计算伤害值
+    /// 公式：伤害值 = max(1, (攻击力 - 防御力)) × (1.5 if 暴击 else 1)
+    func calculateDamage(targetDefense: Double, isCritical: Bool) -> Int {
+        let baseDamage = max(1.0, Double(attack) - targetDefense)
+        let critMultiplier = isCritical ? 1.5 : 1.0
+        return Int(baseDamage * critMultiplier)
+    }
+    
+    /// 判断是否暴击（基于暴击率）
+    func rollCritical() -> Bool {
+        return Double.random(in: 0...100) < critRate
+    }
 }
 
 // MARK: - Preview Data
