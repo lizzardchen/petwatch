@@ -9,14 +9,20 @@ struct Player: Codable {
     var dailyChallenges: Int   // 今日剩余挑战次数
     var upgradeItems: [UpgradeItem]  // 升级物品列表
     
+    // 健康数据追踪（用于经验加成）
+    var todayExerciseSeconds: Int = 0     // 今日运动秒数
+    var todaySleepSeconds: Int = 0        // 今日睡眠秒数
+    var lastHealthUpdateDate: Date = Date()  // 上次健康数据更新日期
+    
     init(diamonds: Int = 1971,
-         currentPet: Pet = Pet(),
+         currentPet: Pet? = nil,
          rank: Int = 999,
          wins: Int = 0,
          dailyChallenges: Int = 3,
          upgradeItems: [UpgradeItem] = []) {
         self.diamonds = diamonds
-        self.currentPet = currentPet
+        // 使用便捷初始化方法创建默认宠物（A级，随机属性）
+        self.currentPet = currentPet ?? Pet(name: "花花", emoji: "🐼", quality: .rankA)
         self.rank = rank
         self.wins = wins
         self.dailyChallenges = dailyChallenges

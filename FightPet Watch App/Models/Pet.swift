@@ -3,47 +3,67 @@ import SwiftUI
 
 /// 宠物品质枚举
 enum PetQuality: Int, Codable, CaseIterable {
-    case common = 1      // 普通
-    case rare = 2        // 稀有
-    case epic = 3        // 史诗
-    case legendary = 4   // 传说
+    case rankA = 1       // A级
+    case rankS = 2       // S级
+    case rankSS = 3      // SS级
     
     var name: String {
         switch self {
-        case .common: return "普通"
-        case .rare: return "稀有"
-        case .epic: return "史诗"
-        case .legendary: return "传说"
+        case .rankA: return "A级"
+        case .rankS: return "S级"
+        case .rankSS: return "SS级"
         }
     }
     
     var color: Color {
         switch self {
-        case .common: return .gray
-        case .rare: return .blue
-        case .epic: return .purple
-        case .legendary: return .orange
+        case .rankA: return .gray
+        case .rankS: return .blue
+        case .rankSS: return .orange
+        }
+    }
+    
+    /// 初始属性总点数（智力+力量+体力）
+    var totalStatsPoints: Int {
+        switch self {
+        case .rankA: return 8
+        case .rankS: return 15
+        case .rankSS: return 24
         }
     }
     
     /// 经验需求系数（品质越高，升级所需经验越多）
     var expMultiplier: Double {
         switch self {
-        case .common: return 1.0
-        case .rare: return 1.2
-        case .epic: return 1.5
-        case .legendary: return 2.0
+        case .rankA: return 1.0
+        case .rankS: return 1.3
+        case .rankSS: return 1.6
         }
     }
     
-    /// 三围基础系数（品质越高，三围基础值越高）
-    var statsMultiplier: Double {
-        switch self {
-        case .common: return 1.0
-        case .rare: return 1.3
-        case .epic: return 1.6
-        case .legendary: return 2.0
+    /// 随机生成符合品质要求的属性点分配
+    /// 规则：三个属性总和必须等于totalStatsPoints，且每个属性至少为1
+    func randomStatsAllocation() -> (intelligence: Int, stamina: Int, strength: Int) {
+        let total = totalStatsPoints
+        var remaining = total - 3  // 先给每个属性分配1点
+        
+        var intelligence = 1
+        var stamina = 1
+        var strength = 1
+        
+        // 随机分配剩余点数
+        while remaining > 0 {
+            let roll = Int.random(in: 0...2)
+            switch roll {
+            case 0: intelligence += 1
+            case 1: stamina += 1
+            case 2: strength += 1
+            default: break
+            }
+            remaining -= 1
         }
+        
+        return (intelligence, stamina, strength)
     }
 }
 
@@ -72,20 +92,134 @@ struct Pet: Identifiable, Codable {
     // 升级相关
     var expPerMinute: Int  // 每分钟经验增长（基础值）
     
+    // MARK: - 等级经验表（从Excel数值表导入）
+    /// 宠物升级所需经验表
+    /// Key: 目标等级, Value: 升到该等级所需经验
+    /// 例如：等级1的宠物升到等级2需要30经验
+    static let levelExperienceTable: [Int: Int] = [
+        2: 30,
+        3: 100,
+        4: 200,
+        5: 400,
+        6: 800,
+        7: 1200,
+        8: 1500,
+        9: 2000,
+        10: 3000,
+        11: 3600,
+        12: 4320,
+        13: 5184,
+        14: 6220,
+        15: 7464,
+        16: 8957,
+        17: 10749,
+        18: 12899,
+        19: 15479,
+        20: 18575,
+        21: 22290,
+        22: 26748,
+        23: 32097,
+        24: 38517,
+        25: 46221,
+        26: 55465,
+        27: 66558,
+        28: 79869,
+        29: 95843,
+        30: 115012,
+        31: 138015,
+        32: 165618,
+        33: 198742,
+        34: 238490,
+        35: 286188,
+        36: 343426,
+        37: 412111,
+        38: 494533,
+        39: 593440,
+        40: 712128,
+        41: 783341,
+        42: 861676,
+        43: 947843,
+        44: 1042627,
+        45: 1146890,
+        46: 1261579,
+        47: 1387737,
+        48: 1526511,
+        49: 1679162,
+        50: 1847079,
+        51: 1939433,
+        52: 2036404,
+        53: 2138224,
+        54: 2245136,
+        55: 2357392,
+        56: 2475262,
+        57: 2599025,
+        58: 2728977,
+        59: 2865425,
+        60: 3008697,
+        61: 3068871,
+        62: 3130248,
+        63: 3192853,
+        64: 3256710,
+        65: 3321844,
+        66: 3388281,
+        67: 3456047,
+        68: 3525168,
+        69: 3595671,
+        70: 3667585,
+        71: 3704260,
+        72: 3741303,
+        73: 3778716,
+        74: 3816503,
+        75: 3854668,
+        76: 3893215,
+        77: 3932147,
+        78: 3971469,
+        79: 4011183,
+        80: 4051295,
+        81: 4091808,
+        82: 4132726,
+        83: 4174053,
+        84: 4215794,
+        85: 4257952,
+        86: 4300531,
+        87: 4343537,
+        88: 4386972,
+        89: 4430842,
+        90: 4475150,
+        91: 4519902,
+        92: 4565101,
+        93: 4610752,
+        94: 4656859,
+        95: 4703428,
+        96: 4750462,
+        97: 4797967,
+        98: 4845947,
+        99: 4894406
+    ]
+    
+    // 主初始化方法
     init(id: UUID = UUID(), 
          name: String = "花花",
          emoji: String = "🐼",
          level: Int = 1,
          exp: Int = 0,
          power: Int = 10,
-         quality: PetQuality = .common,
-         intelligence: Int = 10,
-         stamina: Int = 10,
-         strength: Int = 10,
+         quality: PetQuality = .rankA,
+         intelligence: Int,
+         stamina: Int,
+         strength: Int,
          happiness: Int = 60,  // 初始60
          intimacy: Int = 0,
          sleepBonus: Int = 0,
          expPerMinute: Int = 1) {
+        
+        // 验证属性总和和最小值
+        let totalStats = intelligence + stamina + strength
+        assert(totalStats == quality.totalStatsPoints, 
+               "属性总和(\(totalStats))必须等于品质要求(\(quality.totalStatsPoints))")
+        assert(intelligence > 0 && stamina > 0 && strength > 0, 
+               "所有属性必须大于0")
+        
         self.id = id
         self.name = name
         self.emoji = emoji
@@ -99,9 +233,44 @@ struct Pet: Identifiable, Codable {
         self.intimacy = intimacy
         self.sleepBonus = sleepBonus
         self.expPerMinute = expPerMinute
-        // 计算初始战力
         self.power = power
-        self.calculatePower()
+    }
+    
+    /// 便捷初始化方法：根据品质随机生成属性
+    init(id: UUID = UUID(),
+         name: String = "花花",
+         emoji: String = "🐼",
+         quality: PetQuality = .rankA,
+         level: Int = 1,
+         happiness: Int = 60,
+         intimacy: Int = 0,
+         sleepBonus: Int = 0,
+         expPerMinute: Int = 1) {
+        
+        // 随机分配属性
+        let stats = quality.randomStatsAllocation()
+        
+        self.init(
+            id: id,
+            name: name,
+            emoji: emoji,
+            level: level,
+            exp: 0,
+            power: 0,
+            quality: quality,
+            intelligence: stats.intelligence,
+            stamina: stats.stamina,
+            strength: stats.strength,
+            happiness: happiness,
+            intimacy: intimacy,
+            sleepBonus: sleepBonus,
+            expPerMinute: expPerMinute
+        )
+        
+        // 计算初始战力
+        var mutableSelf = self
+        mutableSelf.calculatePower()
+        self = mutableSelf
     }
     
     /// 计算战力
@@ -126,9 +295,18 @@ struct Pet: Identifiable, Codable {
         return exp >= expRequiredForNextLevel()
     }
     
-    /// 下一级所需经验（根据品质调整）
+    /// 下一级所需经验（从经验表查询）
+    /// 例如：等级1的宠物查询等级2对应的经验值（30）
     func expRequiredForNextLevel() -> Int {
-        return Int(Double(level * 100) * quality.expMultiplier)
+        let nextLevel = level + 1
+        
+        // 从经验表中查询下一级所需经验
+        if let requiredExp = Pet.levelExperienceTable[nextLevel] {
+            return requiredExp
+        }
+        
+        // 如果超出表格范围（等级99+），返回最大值或使用默认公式
+        return Pet.levelExperienceTable[99] ?? 5000000
     }
     
     /// 是否可以参与排行榜战斗（快乐值需要>=30）
@@ -191,18 +369,48 @@ struct Pet: Identifiable, Codable {
 // MARK: - Preview Data
 extension Pet {
     static let preview = Pet(
-        name: "[A] 花花",
+        name: "花花",
         emoji: "🐼",
-        level: 99,
+        level: 5,
         exp: 153,
         power: 44,
-        quality: .rare,
-        intelligence: 11,
-        stamina: 11,
-        strength: 11,
+        quality: .rankS,
+        intelligence: 5,
+        stamina: 5,
+        strength: 5,
         happiness: 98,
         intimacy: 0,
         sleepBonus: 0,
         expPerMinute: 11
+    )
+    
+    /// A级示例宠物（总属性8点）
+    static let previewRankA = Pet(
+        name: "小白",
+        emoji: "🐱",
+        quality: .rankA,
+        intelligence: 3,
+        stamina: 2,
+        strength: 3
+    )
+    
+    /// S级示例宠物（总属性15点）
+    static let previewRankS = Pet(
+        name: "小黑",
+        emoji: "🐶",
+        quality: .rankS,
+        intelligence: 5,
+        stamina: 5,
+        strength: 5
+    )
+    
+    /// SS级示例宠物（总属性24点）
+    static let previewRankSS = Pet(
+        name: "小金",
+        emoji: "🦁",
+        quality: .rankSS,
+        intelligence: 8,
+        stamina: 8,
+        strength: 8
     )
 }

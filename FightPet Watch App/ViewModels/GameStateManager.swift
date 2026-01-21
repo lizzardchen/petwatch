@@ -71,10 +71,10 @@ class GameStateManager: ObservableObject {
             let happinessLoss = happinessDecayCount * happinessDecayAmount
             player.currentPet.decreaseHappiness(happinessLoss)
             
-            // 计算经验增加
-            let expGainMinutes = Int(elapsed / expUpdateInterval)
-            let expPerMinute = totalExpPerMinute()
-            let expGain = expGainMinutes * expPerMinute
+            // 计算经验增加（基于秒数）
+            let elapsedSeconds = Int(elapsed)
+            let expPerSecond = totalExpPerSecond()
+            let expGain = Int(Double(elapsedSeconds) * expPerSecond)
             addExperience(expGain)
             
             lastUpdateTime = now
@@ -93,8 +93,9 @@ class GameStateManager: ObservableObject {
             player.currentPet.decreaseHappiness(decayCount * happinessDecayAmount)
         }
         
-        // 每分钟增加经验
-        let expToAdd = totalExpPerMinute()
+        // 每分钟增加经验（60秒）
+        let expPerSecond = totalExpPerSecond()
+        let expToAdd = Int(expPerSecond * 60)
         addExperience(expToAdd)
         
         lastUpdateTime = now
@@ -103,13 +104,72 @@ class GameStateManager: ObservableObject {
     
     // MARK: - 经验系统
     
-    /// 计算每分钟总经验产出
-    /// 1. 基础经验（默认提供）
-    /// 2. 升级建筑加成
+    /// 计算每秒总经验产出
+    /// 公式: 总经验/秒 = [基础挂机(1) × 双倍经验卡倍数] + 建筑1 + 建筑2 + 建筑3 + 睡眠 + 运动
+    func totalExpPerSecond() -> Double {
+        // 1. 基础挂机经验（1经验/秒）
+        let baseExp: Double = 1.0
+        
+        // 2. 双倍经验卡加成（暂时未实现，TODO: 添加经验卡系统）
+        let expCardMultiplier: Double = 1.0  // 使用经验卡时为2.0
+        let baseWithCard = baseExp * expCardMultiplier
+        
+        // 3. 建筑加成（从升级物品获取）
+        let buildingBonus = player.upgradeItems.reduce(0.0) { $0 + $1.expBonusPerSecond() }
+        
+        // 4. 睡眠加成（从Player获取，最多2经验/秒，每天限4小时=14400秒）
+        let sleepBonus = calculateSleepBonus()
+        
+        // 5. 运动加成（从Player获取，最多3经验/秒，每天限2小时=7200秒）
+        let exerciseBonus = calculateExerciseBonus()
+        
+        return baseWithCard + buildingBonus + sleepBonus + exerciseBonus
+    }
+    
+    /// 计算睡眠经验加成
+    /// 最多2经验/秒，每天限制4小时（14400秒）
+    private func calculateSleepBonus() -> Double {
+        let maxSleepSeconds: Double = 14400  // 4小时
+        let maxBonus: Double = 2.0  // 最多2经验/秒
+        
+        // 检查是否需要重置每日数据
+        checkAndResetDailyHealth()
+        
+        let validSleepSeconds = min(Double(player.todaySleepSeconds), maxSleepSeconds)
+        // 计算当前平均加成：如果睡够4小时则满额2经验/秒
+        return (validSleepSeconds / maxSleepSeconds) * maxBonus
+    }
+    
+    /// 计算运动经验加成
+    /// 最多3经验/秒，每天限制2小时（7200秒）
+    private func calculateExerciseBonus() -> Double {
+        let maxExerciseSeconds: Double = 7200  // 2小时
+        let maxBonus: Double = 3.0  // 最多3经验/秒
+        
+        // 检查是否需要重置每日数据
+        checkAndResetDailyHealth()
+        
+        let validExerciseSeconds = min(Double(player.todayExerciseSeconds), maxExerciseSeconds)
+        // 计算当前平均加成：如果运动够2小时则满额3经验/秒
+        return (validExerciseSeconds / maxExerciseSeconds) * maxBonus
+    }
+    
+    /// 检查并重置每日健康数据
+    private func checkAndResetDailyHealth() {
+        let calendar = Calendar.current
+        if !calendar.isDateInToday(player.lastHealthUpdateDate) {
+            // 新的一天，重置数据
+            player.todayExerciseSeconds = 0
+            player.todaySleepSeconds = 0
+            player.lastHealthUpdateDate = Date()
+            savePlayer()
+        }
+    }
+    
+    /// 【已废弃】旧的每分钟经验计算（保留兼容性）
+    @available(*, deprecated, message: "使用 totalExpPerSecond() 代替")
     func totalExpPerMinute() -> Int {
-        let baseExp = player.currentPet.expPerMinute  // 基础经验
-        let buildingBonus = player.upgradeItems.reduce(0) { $0 + $1.expBonus() }
-        return baseExp + buildingBonus
+        return Int(totalExpPerSecond() * 60)
     }
     
     /// 添加经验并自动升级
@@ -122,12 +182,32 @@ class GameStateManager: ObservableObject {
         }
     }
     
-    /// 运动中获取额外经验（由健康数据触发）
-    func addExerciseExperience(_ steps: Int) {
-        // 每1000步获得10点经验
-        let bonusExp = (steps / 1000) * 10
-        addExperience(bonusExp)
+    // MARK: - 健康数据更新
+    
+    /// 更新运动秒数（从HealthKit调用）
+    /// - Parameter seconds: 今日累计运动秒数
+    func updateExerciseData(seconds: Int) {
+        checkAndResetDailyHealth()
+        player.todayExerciseSeconds = seconds
         savePlayer()
+    }
+    
+    /// 更新睡眠秒数（从HealthKit调用）
+    /// - Parameter seconds: 今日累计睡眠秒数
+    func updateSleepData(seconds: Int) {
+        checkAndResetDailyHealth()
+        player.todaySleepSeconds = seconds
+        savePlayer()
+    }
+    
+    /// 获取当前运动经验加成（用于UI显示）
+    func getCurrentExerciseBonus() -> Double {
+        return calculateExerciseBonus()
+    }
+    
+    /// 获取当前睡眠经验加成（用于UI显示）
+    func getCurrentSleepBonus() -> Double {
+        return calculateSleepBonus()
     }
     
     // MARK: - 快乐值系统
