@@ -5,6 +5,9 @@ import Combine
 class GameStateManager: ObservableObject {
     @Published var player: Player
     
+    // HealthKit管理器
+    let healthManager = HealthManager()
+    
     // 快乐值和经验定时器
     private var gameTimer: Timer?
     private var lastUpdateTime: Date
@@ -36,6 +39,17 @@ class GameStateManager: ObservableObject {
         
         // 计算离线期间的变化
         processOfflineTime()
+        
+        // 请求He althKit权限
+        healthManager.requestAuthorization { granted in
+            if granted {
+                print("HealthKit授权成功")
+                // 启动健康数据监听
+                self.healthManager.startHealthMonitoring()
+            } else {
+                print("HealthKit授权失败，睡眠和运动加成将不可用")
+            }
+        }
         
         // 启动游戏定时器
         startGameTimer()
@@ -126,32 +140,18 @@ class GameStateManager: ObservableObject {
         return baseWithCard + buildingBonus + sleepBonus + exerciseBonus
     }
     
-    /// 计算睡眠经验加成
-    /// 最多2经验/秒，每天限制4小时（14400秒）
+    /// 计算睡眠经验加成（即时制）
+    /// 只在当前睡眠时提供2经验/秒
     private func calculateSleepBonus() -> Double {
-        let maxSleepSeconds: Double = 14400  // 4小时
-        let maxBonus: Double = 2.0  // 最多2经验/秒
-        
-        // 检查是否需要重置每日数据
-        checkAndResetDailyHealth()
-        
-        let validSleepSeconds = min(Double(player.todaySleepSeconds), maxSleepSeconds)
-        // 计算当前平均加成：如果睡够4小时则满额2经验/秒
-        return (validSleepSeconds / maxSleepSeconds) * maxBonus
+        // 同步获取睡眠状态（使用published property）
+        return healthManager.isSleeping ? 2 : 0.0
     }
     
-    /// 计算运动经验加成
-    /// 最多3经验/秒，每天限制2小时（7200秒）
+    /// 计算运动经验加成（即时制）
+    /// 只在当前运动时提供3经验/秒
     private func calculateExerciseBonus() -> Double {
-        let maxExerciseSeconds: Double = 7200  // 2小时
-        let maxBonus: Double = 3.0  // 最多3经验/秒
-        
-        // 检查是否需要重置每日数据
-        checkAndResetDailyHealth()
-        
-        let validExerciseSeconds = min(Double(player.todayExerciseSeconds), maxExerciseSeconds)
-        // 计算当前平均加成：如果运动够2小时则满额3经验/秒
-        return (validExerciseSeconds / maxExerciseSeconds) * maxBonus
+        // 同步获取运动状态（使用published property）
+        return healthManager.isExercising ? 3 : 0.0
     }
     
     /// 检查并重置每日健康数据
