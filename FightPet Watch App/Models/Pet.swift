@@ -94,9 +94,10 @@ struct Pet: Identifiable, Codable {
     
     // MARK: - 等级经验表（从Excel数值表导入）
     /// 宠物升级所需经验表
-    /// Key: 目标等级, Value: 升到该等级所需经验
-    /// 例如：等级1的宠物升到等级2需要30经验
+    /// Key: 当前等级, Value: 从当前等级升到下一级所需经验
+    /// 例如：等级1(key=1)升到等级2需要15经验
     static let levelExperienceTable: [Int: Int] = [
+        1: 15,
         2: 30,
         3: 100,
         4: 200,
@@ -281,11 +282,12 @@ struct Pet: Identifiable, Codable {
         power = max(1, Int(Double(level) * Double(quality.rawValue) * coefficient))
     }
     
-    /// 升级宠物
+    /// 升级宠物（保留溢出经验）
     mutating func levelUp() {
         if canLevelUp() {
+            let required = expRequiredForNextLevel()
+            exp -= required  // 扣除升级所需经验，保留溢出部分
             level += 1
-            exp = 0
             calculatePower()
         }
     }
@@ -295,18 +297,17 @@ struct Pet: Identifiable, Codable {
         return exp >= expRequiredForNextLevel()
     }
     
-    /// 下一级所需经验（从经验表查询）
-    /// 例如：等级1的宠物查询等级2对应的经验值（30）
+    /// 下一级所需经验（从经验表查询当前等级）
+    /// 表格key是当前等级，value是升到下一级所需经验
+    /// 例如：Lv.1(key=1)升到Lv.2需要15经验
     func expRequiredForNextLevel() -> Int {
-        let nextLevel = level + 1
-        
-        // 从经验表中查询下一级所需经验
-        if let requiredExp = Pet.levelExperienceTable[nextLevel] {
+        // 从经验表中查询当前等级对应的升级经验
+        if let requiredExp = Pet.levelExperienceTable[level] {
             return requiredExp
         }
         
-        // 如果超出表格范围（等级99+），返回最大值或使用默认公式
-        return Pet.levelExperienceTable[99] ?? 5000000
+        // 如果超出表格范围（等级99+），返回默认值
+        return 100000
     }
     
     /// 是否可以参与排行榜战斗（快乐值需要>=30）

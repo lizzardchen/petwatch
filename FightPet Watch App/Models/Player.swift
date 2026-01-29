@@ -14,7 +14,13 @@ struct Player: Codable {
     var todaySleepSeconds: Int = 0        // 今日睡眠秒数
     var lastHealthUpdateDate: Date = Date()  // 上次健康数据更新日期
     
-    init(diamonds: Int = 1971,
+    // 每日登录追踪
+    var loginStreakDays: Int = 0          // 连续登录天数（最多7天）
+    var lastLoginDate: Date?              // 上次登录日期
+    var totalLoginDays: Int = 0           // 总登录天数
+    var hasClaimedTodayReward: Bool = false  // 今日是否已领取奖励
+    
+    init(diamonds: Int = 50,
          currentPet: Pet? = nil,
          rank: Int = 999,
          wins: Int = 0,
@@ -61,7 +67,7 @@ struct Player: Codable {
 // MARK: - Preview Data
 extension Player {
     static let preview = Player(
-        diamonds: 1971,
+        diamonds: 1,
         currentPet: .preview,
         rank: 1,
         wins: 0,

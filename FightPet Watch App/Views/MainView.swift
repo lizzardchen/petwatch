@@ -61,6 +61,7 @@ struct MainView: View {
                             // PetCard: 60% of baseFixedSectionHeight
                             PetCard(
                                 pet: gameState.player.currentPet,
+                                gameState: gameState,
                                 onRebirth: { showRebirth = true },
                                 screenWidth: screenWidth,
                                 allocatedHeight: baseFixedSectionHeight * LayoutConstants.FixedSectionLayout.petCardHeightRatio
@@ -171,6 +172,7 @@ struct MainView: View {
         }
         .sheet(isPresented: $showRanking) {
             RankingView()
+                .environmentObject(gameState)
         }
         .sheet(isPresented: $showStore) {
             StoreView(gameState: gameState)

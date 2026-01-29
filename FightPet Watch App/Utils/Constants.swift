@@ -94,7 +94,7 @@ struct Constants {
     
     // MARK: - Game Constants
     struct Game {
-        static let initialDiamonds = 1971
+        static let initialDiamonds = 50
         static let dailyChallenges = 3
         static let shareReward = 100
         static let hatchingTime: TimeInterval = 60 // 60秒

@@ -40,6 +40,9 @@ class GameStateManager: ObservableObject {
         // 计算离线期间的变化
         processOfflineTime()
         
+        // 检查并发放每日登录奖励
+        checkDailyLoginReward()
+        
         // 请求He althKit权限
         healthManager.requestAuthorization { granted in
             if granted {
@@ -61,9 +64,9 @@ class GameStateManager: ObservableObject {
     
     // MARK: - 定时器管理
     
-    /// 启动游戏定时器（每分钟更新一次）
+    /// 启动游戏定时器（每10秒更新一次）
     private func startGameTimer() {
-        gameTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+        gameTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
             self?.onTimerTick()
         }
     }
@@ -107,9 +110,9 @@ class GameStateManager: ObservableObject {
             player.currentPet.decreaseHappiness(decayCount * happinessDecayAmount)
         }
         
-        // 每分钟增加经验（60秒）
+        // 每秒增加经验
         let expPerSecond = totalExpPerSecond()
-        let expToAdd = Int(expPerSecond * 60)
+        let expToAdd = Int(expPerSecond * elapsed)
         addExperience(expToAdd)
         
         lastUpdateTime = now
@@ -235,6 +238,53 @@ class GameStateManager: ObservableObject {
     /// 保存最后更新时间
     private func saveLastUpdateTime() {
         UserDefaults.standard.set(lastUpdateTime, forKey: "lastUpdateTime")
+    }
+    
+    
+    // MARK: - 每日登录奖励
+    
+    /// 检查并发放每日登录奖励
+    /// 新用户前7天每日登录获得20钻石，断签则重置连续天数
+    private func checkDailyLoginReward() {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        
+        // 检查上次登录日期
+        if let lastLogin = player.lastLoginDate {
+            let lastLoginDay = calendar.startOfDay(for: lastLogin)
+            
+            // 如果今天已经登录过，直接返回
+            if calendar.isDate(today, inSameDayAs: lastLoginDay) {
+                return
+            }
+            
+            // 计算距离上次登录的天数
+            let daysSinceLastLogin = calendar.dateComponents([.day], from: lastLoginDay, to: today).day ?? 0
+            
+            if daysSinceLastLogin == 1 {
+                // 连续登录
+                player.loginStreakDays += 1
+            } else {
+                // 断签，重置连续天数
+                player.loginStreakDays = 1
+            }
+        } else {
+            // 首次登录
+            player.loginStreakDays = 1
+        }
+        
+        // 前7天才发放每日奖励
+        if player.loginStreakDays <= 7 {
+            player.addDiamonds(20)
+            print("✨ 每日登录奖励：+20钻石 (连续\(player.loginStreakDays)天)")
+        }
+        
+        // 更新登录数据
+        player.lastLoginDate = today
+        player.totalLoginDays += 1
+        player.hasClaimedTodayReward = true
+        
+        savePlayer()
     }
     
     // MARK: - 钻石管理

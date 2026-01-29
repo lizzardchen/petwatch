@@ -3,6 +3,7 @@ import SwiftUI
 /// 宠物卡片组件
 struct PetCard: View {
     let pet: Pet
+    @ObservedObject var gameState: GameStateManager
     var onRebirth: (() -> Void)? = nil
     let screenWidth: CGFloat
     let allocatedHeight: CGFloat  // 新增：分配给PetCard的高度
@@ -26,6 +27,10 @@ struct PetCard: View {
         let expFontSize = firstRowHeight * 0.55
         let statFontSize = secondRowHeight * 0.55
         let iconSize = secondRowHeight * 0.55
+        
+        // 计算实时经验值（每分钟 = 每秒 × 60）
+        let expPerMinute = Int(gameState.totalExpPerSecond() * 60)
+        let sleepBonus = Int(gameState.getCurrentSleepBonus())
         
         VStack(alignment: .center, spacing: rowSpacing) {
             // 第1行：等级 + 经验值 + 重生按钮
@@ -89,7 +94,7 @@ struct PetCard: View {
                 HStack(spacing: screenWidth * 0.015) {
                     Text("📈")
                         .font(.system(size: iconSize))
-                    Text("+\(pet.expPerMinute)/分钟")
+                    Text("+\(expPerMinute)/分钟")
                         .font(.system(size: statFontSize))
                         .minimumScaleFactor(0.5)
                         .fixedSize(horizontal: true, vertical: false)
@@ -99,7 +104,7 @@ struct PetCard: View {
                 Spacer()
                 
                 HStack(spacing: screenWidth * 0.015) {
-                    Text("🌙睡眠+\(pet.sleepBonus)")
+                    Text("🌙睡眠+\(sleepBonus)")
                         .font(.system(size: statFontSize))
                         .minimumScaleFactor(0.5)
                         .fixedSize(horizontal: true, vertical: false)
@@ -122,7 +127,8 @@ struct PetCard: View {
 }
 
 #Preview {
-    PetCard(pet: .preview, 
+    PetCard(pet: .preview,
+            gameState: GameStateManager(),
             screenWidth: 184,  // 典型的 Apple Watch 宽度
             allocatedHeight: 224 * 0.6) // 典型的 Apple Watch 高度的60%
         .padding()
@@ -134,3 +140,4 @@ struct PetCard: View {
             )
         )
 }
+
