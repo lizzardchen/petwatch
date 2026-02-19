@@ -5,7 +5,6 @@ struct RankingView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var gameState: GameStateManager
     @State private var showOpponentSelection = false
-    @State private var dailyChallenges = 3
     
     // 模拟排行榜数据
     let rankings: [(rank: Int, player: Opponent)] = [
@@ -62,7 +61,7 @@ struct RankingView: View {
                     HStack(spacing: 4) {
                         ForEach(0..<3) { index in
                             Circle()
-                                .fill(index < dailyChallenges ? Color.green : Color.gray.opacity(0.3))
+                                .fill(index < gameState.player.dailyChallenges ? Color.green : Color.gray.opacity(0.3))
                                 .frame(width: 8, height: 8)
                         }
                     }
@@ -82,21 +81,21 @@ struct RankingView: View {
                 
                 // 随机挑战按钮
                 GradientButton(
-                    title: gameState.canBattle() ? "随机挑战" : "快乐值不足",
+                    title: !gameState.hasRemainingChallenges() ? "次数已用完" : (gameState.canBattle() ? "随机挑战" : "快乐值不足"),
                     icon: "⚔️",
                     gradient: LinearGradient(
-                        colors: gameState.canBattle() 
+                        colors: (gameState.canBattle() && gameState.hasRemainingChallenges())
                             ? [Color.red, Color.red.opacity(0.8)]
                             : [Color.gray, Color.gray.opacity(0.8)],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
                 ) {
-                    if gameState.canBattle() {
+                    if gameState.canBattle() && gameState.hasRemainingChallenges() {
                         showOpponentSelection = true
                     }
                 }
-                .disabled(!gameState.canBattle())
+                .disabled(!gameState.canBattle() || !gameState.hasRemainingChallenges())
                 .padding(.horizontal)
                 .padding(.bottom, 20)
             }
@@ -104,6 +103,7 @@ struct RankingView: View {
         .background(Constants.Colors.darkBackground)
         .sheet(isPresented: $showOpponentSelection) {
             OpponentSelectionView()
+                .environmentObject(gameState)
         }
     }
 }
@@ -191,6 +191,7 @@ struct RankingCard: View {
 /// 对手选择界面
 struct OpponentSelectionView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var gameState: GameStateManager
     
     let opponents = Opponent.previewOpponents
     
@@ -220,7 +221,7 @@ struct OpponentSelectionView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     ForEach(opponents) { opponent in
-                        OpponentCard(opponent: opponent)
+                        OpponentCard(opponent: opponent, gameState: gameState)
                     }
                 }
                 .padding()
@@ -244,10 +245,12 @@ struct OpponentSelectionView: View {
 /// 对手卡片
 struct OpponentCard: View {
     let opponent: Opponent
+    @ObservedObject var gameState: GameStateManager
+    @State private var showBattle = false
     
     var body: some View {
         Button(action: {
-            // 开始战斗
+            showBattle = true
         }) {
             HStack(spacing: 12) {
                 // 头像
@@ -293,6 +296,9 @@ struct OpponentCard: View {
         .background(Constants.Colors.darkGray.opacity(0.6))
         .cornerRadius(Constants.CornerRadius.large)
         .buttonStyle(.plain)
+        .sheet(isPresented: $showBattle) {
+            BattleView(opponent: opponent, gameState: gameState)
+        }
     }
 }
 

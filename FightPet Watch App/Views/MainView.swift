@@ -177,8 +177,7 @@ struct MainView: View {
             StoreView(gameState: gameState)
         }
         .sheet(isPresented: $showRebirth) {
-            // TODO: 重生界面（待实现）
-            Text("重生界面（待实现）")
+            RebirthView(gameState: gameState)
         }
     }
 }

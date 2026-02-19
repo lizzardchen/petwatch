@@ -41,6 +41,24 @@ enum PetQuality: Int, Codable, CaseIterable {
         }
     }
     
+    /// 重生后的下一品质
+    var nextQuality: PetQuality? {
+        switch self {
+        case .rankA: return .rankS
+        case .rankS: return .rankSS
+        case .rankSS: return nil  // 已是最高品质
+        }
+    }
+    
+    /// 重生钻石奖励
+    var rebirthDiamondReward: Int {
+        switch self {
+        case .rankA: return 100
+        case .rankS: return 300
+        case .rankSS: return 500
+        }
+    }
+    
     /// 随机生成符合品质要求的属性点分配
     /// 规则：三个属性总和必须等于totalStatsPoints，且每个属性至少为1
     func randomStatsAllocation() -> (intelligence: Int, stamina: Int, strength: Int) {
@@ -88,6 +106,9 @@ struct Pet: Identifiable, Codable {
     var happiness: Int     // 快乐值
     var intimacy: Int      // 亲密值
     var sleepBonus: Int    // 睡眠加成
+    
+    // 重生
+    var rebirthCount: Int  // 重生次数
     
     // 升级相关
     var expPerMinute: Int  // 每分钟经验增长（基础值）
@@ -212,6 +233,7 @@ struct Pet: Identifiable, Codable {
          happiness: Int = 60,  // 初始60
          intimacy: Int = 0,
          sleepBonus: Int = 0,
+         rebirthCount: Int = 0,
          expPerMinute: Int = 1) {
         
         // 验证属性总和和最小值
@@ -233,6 +255,7 @@ struct Pet: Identifiable, Codable {
         self.happiness = happiness
         self.intimacy = intimacy
         self.sleepBonus = sleepBonus
+        self.rebirthCount = rebirthCount
         self.expPerMinute = expPerMinute
         self.power = power
     }
@@ -246,6 +269,7 @@ struct Pet: Identifiable, Codable {
          happiness: Int = 60,
          intimacy: Int = 0,
          sleepBonus: Int = 0,
+         rebirthCount: Int = 0,
          expPerMinute: Int = 1) {
         
         // 随机分配属性
@@ -265,6 +289,7 @@ struct Pet: Identifiable, Codable {
             happiness: happiness,
             intimacy: intimacy,
             sleepBonus: sleepBonus,
+            rebirthCount: rebirthCount,
             expPerMinute: expPerMinute
         )
         
@@ -365,6 +390,44 @@ struct Pet: Identifiable, Codable {
     func rollCritical() -> Bool {
         return Double.random(in: 0...100) < critRate
     }
+    
+    // MARK: - 重生系统
+    
+    /// 是否可以重生（等级达到99）
+    func canRebirth() -> Bool {
+        return level >= 99
+    }
+    
+    /// 重生后的品质（SS级重生保持SS）
+    func rebirthQuality() -> PetQuality {
+        return quality.nextQuality ?? quality
+    }
+    
+    /// 执行重生，返回新的Pet
+    func rebirth() -> Pet {
+        let newQuality = rebirthQuality()
+        let newStats = newQuality.randomStatsAllocation()
+        
+        var newPet = Pet(
+            id: self.id,
+            name: self.name,
+            emoji: self.emoji,
+            level: 1,
+            exp: 0,
+            power: 0,
+            quality: newQuality,
+            intelligence: newStats.intelligence,
+            stamina: newStats.stamina,
+            strength: newStats.strength,
+            happiness: 60,
+            intimacy: self.intimacy,
+            sleepBonus: 0,
+            rebirthCount: self.rebirthCount + 1,
+            expPerMinute: 1
+        )
+        newPet.calculatePower()
+        return newPet
+    }
 }
 
 // MARK: - Preview Data
@@ -382,6 +445,7 @@ extension Pet {
         happiness: 98,
         intimacy: 0,
         sleepBonus: 0,
+        rebirthCount: 0,
         expPerMinute: 11
     )
     

@@ -422,4 +422,131 @@ class GameStateManager: ObservableObject {
         player.currentPet.name = newName
         savePlayer()
     }
+    
+    // MARK: - 战斗系统
+    
+    /// 检查是否还有剩余挑战次数
+    func hasRemainingChallenges() -> Bool {
+        return player.dailyChallenges > 0
+    }
+    
+    /// 执行战斗并返回战斗日志
+    /// - Parameter opponent: 对手
+    /// - Returns: (胜负结果, 战斗回合日志, 钻石奖励)
+    func executeBattle(against opponent: Opponent) -> (playerWon: Bool, rounds: [BattleRound], diamondReward: Int) {
+        var playerHP = player.currentPet.hp
+        var opponentHP = opponent.hp
+        var rounds: [BattleRound] = []
+        
+        let maxRounds = 20
+        var roundNumber = 0
+        
+        // 根据速度决定先手
+        let playerFirst = player.currentPet.speed >= opponent.speed
+        
+        while playerHP > 0 && opponentHP > 0 && roundNumber < maxRounds {
+            roundNumber += 1
+            
+            if playerFirst {
+                // 玩家先攻
+                let playerCrit = player.currentPet.rollCritical()
+                let playerDmg = player.currentPet.calculateDamage(targetDefense: opponent.defense, isCritical: playerCrit)
+                opponentHP = max(0, opponentHP - playerDmg)
+                
+                rounds.append(BattleRound(
+                    roundNumber: roundNumber,
+                    isPlayerAttack: true,
+                    damage: playerDmg,
+                    isCritical: playerCrit,
+                    playerHPAfter: playerHP,
+                    opponentHPAfter: opponentHP
+                ))
+                
+                if opponentHP <= 0 { break }
+                
+                // 对手反击
+                let opponentCrit = opponent.rollCritical()
+                let opponentDmg = opponent.calculateDamage(targetDefense: player.currentPet.defense, isCritical: opponentCrit)
+                playerHP = max(0, playerHP - opponentDmg)
+                
+                rounds.append(BattleRound(
+                    roundNumber: roundNumber,
+                    isPlayerAttack: false,
+                    damage: opponentDmg,
+                    isCritical: opponentCrit,
+                    playerHPAfter: playerHP,
+                    opponentHPAfter: opponentHP
+                ))
+            } else {
+                // 对手先攻
+                let opponentCrit = opponent.rollCritical()
+                let opponentDmg = opponent.calculateDamage(targetDefense: player.currentPet.defense, isCritical: opponentCrit)
+                playerHP = max(0, playerHP - opponentDmg)
+                
+                rounds.append(BattleRound(
+                    roundNumber: roundNumber,
+                    isPlayerAttack: false,
+                    damage: opponentDmg,
+                    isCritical: opponentCrit,
+                    playerHPAfter: playerHP,
+                    opponentHPAfter: opponentHP
+                ))
+                
+                if playerHP <= 0 { break }
+                
+                // 玩家反击
+                let playerCrit = player.currentPet.rollCritical()
+                let playerDmg = player.currentPet.calculateDamage(targetDefense: opponent.defense, isCritical: playerCrit)
+                opponentHP = max(0, opponentHP - playerDmg)
+                
+                rounds.append(BattleRound(
+                    roundNumber: roundNumber,
+                    isPlayerAttack: true,
+                    damage: playerDmg,
+                    isCritical: playerCrit,
+                    playerHPAfter: playerHP,
+                    opponentHPAfter: opponentHP
+                ))
+            }
+        }
+        
+        let playerWon = opponentHP <= 0 || (playerHP > 0 && opponentHP > 0 && playerHP >= opponentHP)
+        
+        // 计算奖励
+        let diamondReward: Int
+        if playerWon {
+            diamondReward = opponent.diamondReward
+            player.wins += 1
+        } else {
+            diamondReward = max(5, opponent.diamondReward / 5)
+        }
+        
+        // 扣减挑战次数
+        player.dailyChallenges = max(0, player.dailyChallenges - 1)
+        
+        // 消耗快乐值
+        player.currentPet.decreaseHappiness(10)
+        
+        // 发放钻石
+        player.addDiamonds(diamondReward)
+        
+        savePlayer()
+        
+        return (playerWon, rounds, diamondReward)
+    }
+    
+    // MARK: - 重生系统
+    
+    /// 执行宠物重生
+    /// - Returns: 重生获得的钻石奖励数量，nil表示重生失败
+    func rebirthPet() -> Int? {
+        guard player.currentPet.canRebirth() else { return nil }
+        
+        let reward = player.currentPet.quality.rebirthDiamondReward
+        player.currentPet = player.currentPet.rebirth()
+        player.addDiamonds(reward)
+        savePlayer()
+        
+        return reward
+    }
 }
