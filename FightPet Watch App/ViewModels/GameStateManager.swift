@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import HealthKit
 
 /// 游戏状态管理器
 class GameStateManager: ObservableObject {
@@ -77,7 +78,7 @@ class GameStateManager: ObservableObject {
         savePlayer()
     }
     
-    /// 处理离线期间的变化
+    /// 处理离线期间的变化（包含健康数据补偿）
     private func processOfflineTime() {
         let now = Date()
         let elapsed = now.timeIntervalSince(lastUpdateTime)
@@ -88,15 +89,97 @@ class GameStateManager: ObservableObject {
             let happinessLoss = happinessDecayCount * happinessDecayAmount
             player.currentPet.decreaseHappiness(happinessLoss)
             
-            // 计算经验增加（基于秒数）
+            // 计算基础经验（不含睡眠和运动加成）
             let elapsedSeconds = Int(elapsed)
-            let expPerSecond = totalExpPerSecond()
-            let expGain = Int(Double(elapsedSeconds) * expPerSecond)
-            addExperience(expGain)
+            let baseExpPerSecond = 1.0  // 基础挂机
+            let buildingBonus = player.upgradeItems.reduce(0.0) { $0 + $1.expBonusPerSecond() }
+            let baseExpGain = Int((baseExpPerSecond + buildingBonus) * Double(elapsedSeconds))
             
-            lastUpdateTime = now
-            saveLastUpdateTime()
+            // 查询离线期间的健康数据并补发经验
+            queryOfflineHealthBonus(from: lastUpdateTime, to: now) { [weak self] healthBonus in
+                guard let self = self else { return }
+                
+                let totalExp = baseExpGain + healthBonus
+                self.addExperience(totalExp)
+                
+                print("📊 离线补发: 基础\(baseExpGain) + 健康\(healthBonus) = 总计\(totalExp)经验")
+                
+                self.lastUpdateTime = now
+                self.saveLastUpdateTime()
+                self.savePlayer()
+            }
         }
+    }
+    
+    /// 查询离线期间的健康数据加成
+    /// - Parameters:
+    ///   - startDate: 离线开始时间
+    ///   - endDate: 离线结束时间（当前时间）
+    ///   - completion: 返回健康加成经验值
+    private func queryOfflineHealthBonus(from startDate: Date, to endDate: Date, completion: @escaping (Int) -> Void) {
+        let group = DispatchGroup()
+        var sleepBonus = 0
+        var exerciseBonus = 0
+        
+        // 1. 查询睡眠时间段
+        group.enter()
+        healthManager.querySleepIntervals(from: startDate, to: endDate) { intervals in
+            // 计算总睡眠时长（秒）
+            let totalSleepSeconds = intervals.reduce(0.0) { total, interval in
+                return total + interval.duration
+            }
+            
+            // 睡眠加成：2经验/秒，每天最多4小时=14400秒
+            let dailyLimit = 14400.0  // 4小时
+            let effectiveSleepSeconds = min(totalSleepSeconds, dailyLimit)
+            sleepBonus = Int(effectiveSleepSeconds * 2.0)
+            
+            group.leave()
+        }
+        
+        // 2. 查询运动时长
+        group.enter()
+        queryExerciseDuration(from: startDate, to: endDate) { duration in
+            // 运动加成：3经验/秒，每天最多2小时=7200秒
+            let dailyLimit = 7200  // 2小时
+            let effectiveDuration = min(duration, dailyLimit)
+            exerciseBonus = effectiveDuration * 3
+            
+            group.leave()
+        }
+        
+        // 等待所有查询完成
+        group.notify(queue: .main) {
+            let totalBonus = sleepBonus + exerciseBonus
+            completion(totalBonus)
+        }
+    }
+    
+    /// 查询指定时间段的运动总时长
+    private func queryExerciseDuration(from startDate: Date, to endDate: Date, completion: @escaping (Int) -> Void) {
+        let workoutType = HKObjectType.workoutType()
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+        
+        let query = HKSampleQuery(sampleType: workoutType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
+            if let error = error {
+                print("查询运动数据失败: \(error.localizedDescription)")
+                completion(0)
+                return
+            }
+            
+            guard let workouts = samples as? [HKWorkout] else {
+                completion(0)
+                return
+            }
+            
+            let totalDuration = workouts.reduce(0.0) { $0 + $1.duration }
+            
+            DispatchQueue.main.async {
+                completion(Int(totalDuration))
+            }
+        }
+        
+        healthManager.healthStore.execute(query)
     }
     
     /// 更新快乐值和经验

@@ -97,7 +97,6 @@ struct MainView: View {
                             // 小窝升级部分
                             UpgradeOptionsView(
                                 items: gameState.player.upgradeItems,
-                                hourlyIncome: gameState.player.hourlyDiamondIncome(),
                                 gameState: gameState,
                                 screenWidth: screenWidth)
                             .padding(.horizontal, screenWidth * 0.04)

@@ -44,7 +44,9 @@ struct Player: Codable {
         ]
     }
     
-    /// 获取每小时钻石收益
+    
+    /// 【已废弃】获取每小时钻石收益
+    @available(*, deprecated, message: "建筑系统不产出钻石，只有升级消耗")
     func hourlyDiamondIncome() -> Int {
         return upgradeItems.reduce(0) { $0 + $1.currentBonus() }
     }

@@ -6,7 +6,7 @@ import Combine
 /// 负责请求权限、查询睡眠和运动数据
 class HealthManager: ObservableObject {
     
-    private let healthStore = HKHealthStore()
+    let healthStore = HKHealthStore()
     
     // 发布的状态
     @Published var isAuthorized = false

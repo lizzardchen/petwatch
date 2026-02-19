@@ -1,0 +1,44 @@
+{
+    "outbounds": [
+        {
+            "_QV2RAY_USE_GLOBAL_FORWARD_PROXY_": false,
+            "mux": {
+                "concurrency": 1,
+                "enabled": false
+            },
+            "protocol": "vless",
+            "sendThrough": "0.0.0.0",
+            "settings": {
+                "vnext": [
+                    {
+                        "address": "104.20.23.30",
+                        "port": 443,
+                        "users": [
+                            {
+                                "encryption": "none",
+                                "id": "9720f687-04bf-40b1-8f34-537cbf4ba181"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "ws",
+                "security": "tls",
+                "tlsSettings": {
+                    "serverName": "funplay.lizzardchen.com"
+                },
+                "wsSettings": {
+                    "headers": {
+                        "host": "funplay.lizzardchen.com"
+                    },
+                    "path": "/Nwp4sMQDaP"
+                },
+                "xtlsSettings": {
+                    "serverName": "funplay.lizzardchen.com"
+                }
+            },
+            "tag": "PROXY"
+        }
+    ]
+}

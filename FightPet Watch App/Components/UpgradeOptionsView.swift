@@ -3,26 +3,18 @@ import SwiftUI
 /// 升级选项视图
 struct UpgradeOptionsView: View {
     let items: [UpgradeItem]
-    let hourlyIncome: Int
     @ObservedObject var gameState: GameStateManager
     let screenWidth: CGFloat
     
     var body: some View {
         VStack(spacing: 12) {
-            // 标题和每小时收益
+            // 标题
             HStack {
                 Text("小窝升级")
                     .font(.system(size: Constants.FontSize.medium, weight: .semibold))
                     .foregroundColor(.white)
                 
                 Spacer()
-                
-                HStack(spacing: 4) {
-                    Text("💎")
-                    Text("+\(hourlyIncome)/时")
-                        .font(.system(size: Constants.FontSize.small))
-                        .foregroundColor(.cyan)
-                }
             }
             
             // 分隔线
@@ -50,6 +42,7 @@ struct UpgradeOptionsView: View {
 struct UpgradeItemCard: View {
     let item: UpgradeItem
     @ObservedObject var gameState: GameStateManager
+    @State private var showDetailView = false
     
     // 从 gameState 获取当前物品状态（因为 item 可能已过时）
     private var currentItem: UpgradeItem? {
@@ -62,17 +55,8 @@ struct UpgradeItemCard: View {
     
     var body: some View {
         Button(action: {
-            // 处理物品点击
-            let current = displayItem
-            
-            if !current.isUnlocked {
-                // 检查解锁条件
-                if canUnlock(current) {
-                    unlockItem(current)
-                }
-            } else if current.canUpgrade() {
-                upgradeItem(current)
-            }
+            // 点击打开详情页面
+            showDetailView = true
         }) {
             VStack(spacing: 6) {
                 // 图标
@@ -114,55 +98,8 @@ struct UpgradeItemCard: View {
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
-        .disabled(!canInteractWithItem(displayItem))
-        .opacity(canInteractWithItem(displayItem) ? 1.0 : 0.6)
-    }
-    
-    /// 检查是否可以解锁物品
-    private func canUnlock(_ item: UpgradeItem) -> Bool {
-        switch item.type {
-        case .petBed:
-            return true // 默认解锁
-        case .foodBowl:
-            // 需要宠物床满级
-            if let petBed = gameState.player.upgradeItems.first(where: { $0.type == .petBed }) {
-                return petBed.isMaxLevel
-            }
-            return false
-        case .toy:
-            // 需要食物碗满级
-            if let foodBowl = gameState.player.upgradeItems.first(where: { $0.type == .foodBowl }) {
-                return foodBowl.isMaxLevel
-            }
-            return false
-        }
-    }
-    
-    /// 检查是否可以与物品交互
-    private func canInteractWithItem(_ item: UpgradeItem) -> Bool {
-        if !item.isUnlocked {
-            return canUnlock(item)
-        }
-        return item.canUpgrade() && gameState.player.diamonds >= item.upgradeCost()
-    }
-    
-    /// 解锁物品
-    private func unlockItem(_ item: UpgradeItem) {
-        if gameState.spendDiamonds(item.upgradeCost()) {
-            if let index = gameState.player.upgradeItems.firstIndex(where: { $0.id == item.id }) {
-                gameState.player.upgradeItems[index].level = 1
-                gameState.savePlayer()
-            }
-        }
-    }
-    
-    /// 升级物品
-    private func upgradeItem(_ item: UpgradeItem) {
-        if gameState.spendDiamonds(item.upgradeCost()) {
-            if let index = gameState.player.upgradeItems.firstIndex(where: { $0.id == item.id }) {
-                gameState.player.upgradeItems[index].level += 1
-                gameState.savePlayer()
-            }
+        .sheet(isPresented: $showDetailView) {
+            BuildingDetailView(item: displayItem, gameState: gameState)
         }
     }
 }
@@ -174,7 +111,6 @@ struct UpgradeItemCard: View {
             UpgradeItem(type: .foodBowl, level: 0),
             UpgradeItem(type: .toy, level: 0)
         ],
-        hourlyIncome: 100,
         gameState: GameStateManager(),
         screenWidth: 184
     )

@@ -41,10 +41,6 @@ struct StoreView: View {
                         SubscriptionCard()
                             .padding(.horizontal)
                         
-                        // 分享游戏
-                        ShareGameCard(gameState: gameState)
-                            .padding(.horizontal)
-                        
                         // 分隔线
                         HStack {
                             Rectangle()
@@ -136,57 +132,7 @@ struct SubscriptionCard: View {
     }
 }
 
-/// 分享游戏卡片
-struct ShareGameCard: View {
-    @ObservedObject var gameState: GameStateManager
-    @State private var showAlert = false
-    
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    Text("🔗")
-                    Text("分享游戏")
-                        .font(.system(size: Constants.FontSize.large, weight: .bold))
-                }
-                .foregroundColor(.white)
-                
-                Text("奖励 100 钻石")
-                    .font(.system(size: Constants.FontSize.small))
-                    .foregroundColor(.white.opacity(0.9))
-            }
-            
-            Spacer()
-            
-            Button(action: {
-                gameState.addDiamonds(100)
-                showAlert = true
-            }) {
-                Text("分享")
-                    .font(.system(size: Constants.FontSize.medium, weight: .semibold))
-                    .foregroundColor(.green)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 8)
-                    .background(Color.white)
-                    .cornerRadius(20)
-            }
-        }
-        .padding()
-        .background(
-            LinearGradient(
-                colors: [Color.green, Color.green.opacity(0.7)],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-        )
-        .cornerRadius(Constants.CornerRadius.large)
-        .alert("分享成功!", isPresented: $showAlert) {
-            Button("确定", role: .cancel) { }
-        } message: {
-            Text("获得 100 钻石奖励!")
-        }
-    }
-}
+
 
 /// 钻石充值视图
 struct DiamondPurchaseView: View {

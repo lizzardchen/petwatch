@@ -39,22 +39,9 @@
 		A39665A82ED89344006562F0 /* FightPet Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "FightPet Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		A39B8EEE2F21263C0086A678 /* Exceptions for "FightPet Watch App" folder in "FightPet Watch App" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"FightPet-Watch-App-Info.plist",
-			);
-			target = A39665A72ED89344006562F0 /* FightPet Watch App */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A39665AC2ED89344006562F0 /* FightPet Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				A39B8EEE2F21263C0086A678 /* Exceptions for "FightPet Watch App" folder in "FightPet Watch App" target */,
-			);
 			path = "FightPet Watch App";
 			sourceTree = "<group>";
 		};
