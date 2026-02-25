@@ -5,13 +5,34 @@ struct RankingView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var gameState: GameStateManager
     @State private var showOpponentSelection = false
+    @State private var firebaseRankings: [RankingPlayer] = []
+    @State private var isLoading = false
     
-    // 模拟排行榜数据
-    let rankings: [(rank: Int, player: Opponent)] = [
-        (1, Opponent(name: "你", emoji: "😍", level: 99, power: 44, wins: 0, winRate: 0.0, diamondReward: 0)),
-        (2, Opponent(name: "小明", emoji: "🐱", level: 3, power: 95, wins: 12, winRate: 0.10, diamondReward: 97)),
-        (3, Opponent(name: "小红", emoji: "🐱", level: 2, power: 88, wins: 10, winRate: 0.10, diamondReward: 94))
-    ]
+    /// 合并 Firebase 数据与玩家自身数据，生成最终排行榜
+    private var mergedRankings: [(rank: Int, name: String, emoji: String, level: Int, power: Int, wins: Int, isCurrentPlayer: Bool)] {
+        let pet = gameState.player.currentPet
+        let deviceID = gameState.firebaseManager.currentDeviceID
+        
+        var all: [(rank: Int, name: String, emoji: String, level: Int, power: Int, wins: Int, isCurrentPlayer: Bool)] = []
+        
+        // 添加玩家自己
+        all.append((rank: 0, name: pet.name, emoji: pet.emoji, level: pet.level, power: pet.power, wins: gameState.player.wins, isCurrentPlayer: true))
+        
+        // 添加 Firebase 上的其他玩家（排除自己）
+        for p in firebaseRankings where p.id != deviceID {
+            all.append((rank: 0, name: p.name, emoji: p.emoji, level: p.level, power: p.power, wins: p.wins, isCurrentPlayer: false))
+        }
+        
+        // 按战力降序排列
+        all.sort { $0.power > $1.power }
+        
+        // 分配排名
+        for i in 0..<all.count {
+            all[i].rank = i + 1
+        }
+        
+        return all
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -34,20 +55,47 @@ struct RankingView: View {
                 
                 Spacer()
                 
-                Color.clear
-                    .frame(width: 30)
+                // 刷新按钮
+                Button(action: loadRankings) {
+                    Image(systemName: isLoading ? "arrow.clockwise" : "arrow.clockwise")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.8))
+                        .rotationEffect(.degrees(isLoading ? 360 : 0))
+                        .animation(isLoading ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: isLoading)
+                }
+                .frame(width: 30)
             }
             .padding()
             .background(Constants.Colors.darkGray.opacity(0.3))
             
             ScrollView {
                 VStack(spacing: 12) {
-                    ForEach(rankings, id: \.rank) { item in
-                        RankingCard(
-                            rank: item.rank,
-                            player: item.player,
-                            isCurrentPlayer: item.rank == 1
-                        )
+                    if isLoading && firebaseRankings.isEmpty {
+                        ProgressView()
+                            .tint(.white)
+                            .padding()
+                        Text("加载排行榜...")
+                            .font(.system(size: Constants.FontSize.small))
+                            .foregroundColor(.white.opacity(0.6))
+                    } else {
+                        ForEach(mergedRankings, id: \.rank) { item in
+                            RankingCard(
+                                rank: item.rank,
+                                name: item.name,
+                                emoji: item.emoji,
+                                level: item.level,
+                                power: item.power,
+                                wins: item.wins,
+                                isCurrentPlayer: item.isCurrentPlayer
+                            )
+                        }
+                        
+                        if firebaseRankings.isEmpty {
+                            Text("暂无其他玩家数据")
+                                .font(.system(size: Constants.FontSize.small))
+                                .foregroundColor(.white.opacity(0.4))
+                                .padding()
+                        }
                     }
                 }
                 .padding()
@@ -101,9 +149,22 @@ struct RankingView: View {
             }
         }
         .background(Constants.Colors.darkBackground)
+        .onAppear {
+            loadRankings()
+            // 上传自己的最新数据
+            gameState.syncToFirebase()
+        }
         .sheet(isPresented: $showOpponentSelection) {
-            OpponentSelectionView()
+            OpponentSelectionView(firebaseRankings: firebaseRankings)
                 .environmentObject(gameState)
+        }
+    }
+    
+    private func loadRankings() {
+        isLoading = true
+        gameState.firebaseManager.fetchRankings {
+            isLoading = false
+            firebaseRankings = gameState.firebaseManager.rankings
         }
     }
 }
@@ -111,15 +172,19 @@ struct RankingView: View {
 /// 排名卡片
 struct RankingCard: View {
     let rank: Int
-    let player: Opponent
+    let name: String
+    let emoji: String
+    let level: Int
+    let power: Int
+    let wins: Int
     let isCurrentPlayer: Bool
     
     var rankColor: Color {
         switch rank {
-        case 1: return .blue
+        case 1: return .yellow
         case 2: return .gray
         case 3: return .orange
-        default: return .clear
+        default: return Constants.Colors.darkGray
         }
     }
     
@@ -137,24 +202,24 @@ struct RankingCard: View {
             }
             
             // 头像
-            Text(player.emoji)
+            Text(emoji)
                 .font(.system(size: 32))
             
             // 信息
             VStack(alignment: .leading, spacing: 2) {
-                Text(player.name)
+                Text(name)
                     .font(.system(size: Constants.FontSize.medium, weight: .semibold))
                     .foregroundColor(.white)
                 
                 HStack(spacing: 12) {
                     HStack(spacing: 4) {
                         Text("⭐")
-                        Text("Lv.\(player.level)")
+                        Text("Lv.\(level)")
                     }
                     
                     HStack(spacing: 4) {
                         Text("🏆")
-                        Text("\(player.wins)胜")
+                        Text("\(wins)胜")
                     }
                 }
                 .font(.system(size: Constants.FontSize.small))
@@ -165,7 +230,7 @@ struct RankingCard: View {
             
             // 战力
             VStack(alignment: .trailing, spacing: 2) {
-                Text("⚡ \(player.power)")
+                Text("⚡ \(power)")
                     .font(.system(size: Constants.FontSize.large, weight: .bold))
                     .foregroundColor(.orange)
             }
@@ -192,8 +257,9 @@ struct RankingCard: View {
 struct OpponentSelectionView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var gameState: GameStateManager
-    
-    let opponents = Opponent.previewOpponents
+    let firebaseRankings: [RankingPlayer]
+    @State private var opponents: [Opponent] = []
+    @State private var isLoading = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -219,26 +285,63 @@ struct OpponentSelectionView: View {
             .padding()
             
             ScrollView {
-                VStack(spacing: 16) {
-                    ForEach(opponents) { opponent in
-                        OpponentCard(opponent: opponent, gameState: gameState)
+                VStack(spacing: 12) {
+                    if isLoading {
+                        ProgressView()
+                            .tint(.white)
+                            .padding()
+                        Text("寻找对手...")
+                            .font(.system(size: Constants.FontSize.small))
+                            .foregroundColor(.white.opacity(0.6))
+                    } else if opponents.isEmpty {
+                        Text("暂无可挑战玩家")
+                            .font(.system(size: Constants.FontSize.small))
+                            .foregroundColor(.white.opacity(0.5))
+                            .padding()
+                    } else {
+                        ForEach(opponents) { opponent in
+                            OpponentCard(opponent: opponent, gameState: gameState)
+                        }
                     }
                 }
-                .padding()
+                .padding(.horizontal)
                 
                 // 提示文字
                 VStack(spacing: 4) {
                     Text("胜利获得更多钻石")
                         .font(.system(size: Constants.FontSize.small))
                         .foregroundColor(.white.opacity(0.8))
-                    Text("失败也有少量钻石奖励")
-                        .font(.system(size: Constants.FontSize.small))
-                        .foregroundColor(.white.opacity(0.6))
                 }
-                .padding()
+                .padding(.vertical, 12)
             }
         }
         .background(Constants.Colors.darkBackground)
+        .onAppear {
+            loadOpponents()
+        }
+    }
+    
+    private func loadOpponents() {
+        let playerPower = gameState.player.currentPet.power
+        let deviceID = gameState.firebaseManager.currentDeviceID
+        
+        // 过滤掉自己
+        let others = firebaseRankings.filter { $0.id != deviceID }
+        
+        if !others.isEmpty {
+            // 需求：根据排行榜里面的选择的宠物去获取数据
+            // 我们选出战力最接近的3个作为对手
+            let sorted = others.sorted { abs($0.power - playerPower) < abs($1.power - playerPower) }
+            let selected = Array(sorted.prefix(3))
+            opponents = selected.map { p in
+                // 奖励根据对方战力动态计算
+                let reward = max(10, Int(Double(p.power) * 0.1) + 10)
+                return p.toOpponent(diamondReward: reward)
+            }.sorted { $0.power < $1.power }
+        } else {
+            // 备选：本地生成
+            opponents = gameState.generateOpponents()
+        }
     }
 }
 
@@ -252,51 +355,39 @@ struct OpponentCard: View {
         Button(action: {
             showBattle = true
         }) {
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 // 头像
                 Text(opponent.emoji)
-                    .font(.system(size: 40))
+                    .font(.system(size: 32))
                 
                 // 信息
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(opponent.name)
-                        .font(.system(size: Constants.FontSize.medium, weight: .semibold))
+                        .font(.system(size: Constants.FontSize.small, weight: .semibold))
                         .foregroundColor(.white)
                     
-                    HStack(spacing: 12) {
-                        HStack(spacing: 4) {
-                            Text("⚡")
-                            Text("\(opponent.power)")
-                        }
-                        
-                        HStack(spacing: 4) {
-                            Text("🏆")
-                            Text("\(opponent.wins)")
-                        }
+                    HStack(spacing: 8) {
+                        Text("⚡ \(opponent.power)")
+                            .foregroundColor(.orange)
+                        Text("胜率: \(Int(opponent.winRate * 100))%")
+                            .foregroundColor(.white.opacity(0.6))
                     }
-                    .font(.system(size: Constants.FontSize.small))
-                    .foregroundColor(.orange)
-                    
-                    Text("胜率 \(Int(opponent.winRate * 100))%")
-                        .font(.system(size: Constants.FontSize.small))
-                        .foregroundColor(.white.opacity(0.7))
+                    .font(.system(size: 10))
                 }
                 
                 Spacer()
                 
-                // 奖励
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("💎 +\(opponent.diamondReward)")
-                        .font(.system(size: Constants.FontSize.medium, weight: .bold))
-                        .foregroundColor(.cyan)
-                }
+                Text("💎\(opponent.diamondReward)")
+                    .font(.system(size: Constants.FontSize.small, weight: .bold))
+                    .foregroundColor(.cyan)
             }
-            .padding()
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(Constants.Colors.darkGray.opacity(0.6))
+            .cornerRadius(10)
         }
-        .background(Constants.Colors.darkGray.opacity(0.6))
-        .cornerRadius(Constants.CornerRadius.large)
         .buttonStyle(.plain)
-        .sheet(isPresented: $showBattle) {
+        .fullScreenCover(isPresented: $showBattle) {
             BattleView(opponent: opponent, gameState: gameState)
         }
     }

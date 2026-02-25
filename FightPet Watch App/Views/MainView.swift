@@ -179,6 +179,9 @@ struct MainView: View {
         .sheet(isPresented: $showRebirth) {
             RebirthView(gameState: gameState)
         }
+        .sheet(isPresented: $showActivity) {
+            ActivityView(gameState: gameState)
+        }
     }
 }
 

@@ -23,6 +23,13 @@ struct BattleView: View {
     @State private var damageIsPlayer: Bool = false
     @State private var roundTimer: Timer? = nil
     
+    // 新增动画偏移
+    @State private var playerOffset: CGFloat = 0
+    @State private var opponentOffset: CGFloat = 0
+    @State private var playerFlash: Bool = false
+    @State private var opponentFlash: Bool = false
+    @State private var shakeOffset: CGFloat = 0
+    
     enum BattlePhase {
         case preparing
         case fighting
@@ -42,6 +49,10 @@ struct BattleView: View {
             case .result:
                 resultView
             }
+            
+            // 全局震动效果
+            Color.clear
+                .offset(x: shakeOffset)
         }
         .onAppear {
             playerMaxHP = gameState.player.currentPet.hp
@@ -56,55 +67,44 @@ struct BattleView: View {
     
     // MARK: - 准备阶段
     private var preparingView: some View {
-        VStack(spacing: 16) {
-            Text("⚔️ 战斗准备 ⚔️")
-                .font(.system(size: Constants.FontSize.title, weight: .bold))
+        VStack(spacing: 12) {
+            Text("⚔️ 战斗准备")
+                .font(.system(size: Constants.FontSize.medium, weight: .bold))
                 .foregroundColor(.yellow)
             
             // VS 展示
-            HStack(spacing: 16) {
+            HStack(spacing: 12) {
                 // 玩家
-                VStack(spacing: 6) {
+                VStack(spacing: 4) {
                     Text(gameState.player.currentPet.emoji)
-                        .font(.system(size: 40))
+                        .font(.system(size: 32))
                     Text(gameState.player.currentPet.name)
-                        .font(.system(size: Constants.FontSize.small, weight: .semibold))
-                        .foregroundColor(.white)
-                    Text("Lv.\(gameState.player.currentPet.level)")
-                        .font(.system(size: Constants.FontSize.tiny))
-                        .foregroundColor(.cyan)
-                    Text("⚡\(gameState.player.currentPet.power)")
-                        .font(.system(size: Constants.FontSize.tiny))
-                        .foregroundColor(.orange)
+                        .font(.system(size: 10, weight: .semibold))
+                        .lineLimit(1)
                 }
+                .frame(maxWidth: .infinity)
                 
                 Text("VS")
-                    .font(.system(size: Constants.FontSize.title, weight: .black))
+                    .font(.system(size: 16, weight: .black))
                     .foregroundColor(.red)
                 
                 // 对手
-                VStack(spacing: 6) {
+                VStack(spacing: 4) {
                     Text(opponent.emoji)
-                        .font(.system(size: 40))
+                        .font(.system(size: 32))
                     Text(opponent.name)
-                        .font(.system(size: Constants.FontSize.small, weight: .semibold))
-                        .foregroundColor(.white)
-                    Text("Lv.\(opponent.level)")
-                        .font(.system(size: Constants.FontSize.tiny))
-                        .foregroundColor(.cyan)
-                    Text("⚡\(opponent.power)")
-                        .font(.system(size: Constants.FontSize.tiny))
-                        .foregroundColor(.orange)
+                        .font(.system(size: 10, weight: .semibold))
+                        .lineLimit(1)
                 }
+                .frame(maxWidth: .infinity)
             }
-            .padding()
+            .padding(.horizontal)
             
             // 属性对比
-            VStack(spacing: 6) {
+            VStack(spacing: 4) {
                 statCompareRow(label: "HP", playerVal: "\(gameState.player.currentPet.hp)", opponentVal: "\(opponent.hp)")
                 statCompareRow(label: "ATK", playerVal: "\(gameState.player.currentPet.attack)", opponentVal: "\(opponent.attack)")
-                statCompareRow(label: "DEF", playerVal: String(format: "%.1f", gameState.player.currentPet.defense), opponentVal: String(format: "%.1f", opponent.defense))
-                statCompareRow(label: "暴击", playerVal: String(format: "%.0f%%", gameState.player.currentPet.critRate), opponentVal: String(format: "%.0f%%", opponent.critRate))
+                statCompareRow(label: "PWR", playerVal: "\(gameState.player.currentPet.power)", opponentVal: "\(opponent.power)")
             }
             .padding(.horizontal)
             
@@ -112,159 +112,115 @@ struct BattleView: View {
             
             // 开战按钮
             Button(action: startBattle) {
-                HStack {
-                    Text("⚔️")
-                    Text("开战！")
-                        .font(.system(size: Constants.FontSize.large, weight: .bold))
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 44)
-                .background(
-                    LinearGradient(
-                        colors: [Color.red, Color.orange],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .cornerRadius(Constants.CornerRadius.large)
+                Text("⚔️ 开始战斗")
+                    .font(.system(size: Constants.FontSize.medium, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 36)
+                    .background(Color.red)
+                    .cornerRadius(18)
             }
+            .buttonStyle(.plain)
             .padding(.horizontal)
             
             Button(action: { dismiss() }) {
-                Text("取消")
-                    .font(.system(size: Constants.FontSize.medium))
-                    .foregroundColor(.white.opacity(0.7))
+                Text("撤退")
+                    .font(.system(size: 10))
+                    .foregroundColor(.white.opacity(0.6))
             }
-            .padding(.bottom, 8)
+            .buttonStyle(.plain)
+            .padding(.bottom, 4)
         }
-        .padding(.top, 16)
     }
     
     // MARK: - 战斗阶段
     private var fightingView: some View {
-        VStack(spacing: 8) {
-            // 回合数
-            Text("第 \(currentDisplayRound) 回合")
-                .font(.system(size: Constants.FontSize.medium, weight: .bold))
-                .foregroundColor(.yellow)
-            
+        VStack(spacing: 10) {
             // 战斗场景
-            HStack(spacing: 12) {
-                // 玩家侧
+            VStack(spacing: 15) {
+                // 对手侧 (上方)
+                VStack(spacing: 4) {
+                    HStack {
+                        Text(opponent.name)
+                            .font(.system(size: 10))
+                        Spacer()
+                        Text("\(opponentHP) HP")
+                            .font(.system(size: 10, design: .monospaced))
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    ZStack(alignment: .leading) {
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                        Rectangle()
+                            .fill(Color.red)
+                            .frame(width: 140 * hpRatio(current: opponentHP, max: opponentMaxHP))
+                    }
+                    .frame(width: 140, height: 6)
+                    .cornerRadius(3)
+                    
+                    Text(opponent.emoji)
+                        .font(.system(size: 44))
+                        .offset(y: opponentOffset)
+                        .opacity(opponentFlash ? 0.3 : 1.0)
+                }
+                
+                // 中间交叉剑图标
+                Image(systemName: "swords")
+                    .font(.system(size: 20))
+                    .foregroundColor(.white.opacity(0.5))
+                
+                // 玩家侧 (下方)
                 VStack(spacing: 4) {
                     Text(gameState.player.currentPet.emoji)
-                        .font(.system(size: 36))
+                        .font(.system(size: 44))
+                        .offset(y: playerOffset)
+                        .opacity(playerFlash ? 0.3 : 1.0)
                     
-                    // HP条
-                    VStack(spacing: 2) {
-                        Text("\(playerHP)/\(playerMaxHP)")
-                            .font(.system(size: 8, design: .monospaced))
-                            .foregroundColor(.white)
-                        
-                        GeometryReader { geo in
-                            ZStack(alignment: .leading) {
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(height: 6)
-                                    .cornerRadius(3)
-                                
-                                Rectangle()
-                                    .fill(hpColor(current: playerHP, max: playerMaxHP))
-                                    .frame(width: geo.size.width * hpRatio(current: playerHP, max: playerMaxHP), height: 6)
-                                    .cornerRadius(3)
-                                    .animation(.easeInOut(duration: 0.3), value: playerHP)
-                            }
-                        }
-                        .frame(height: 6)
+                    ZStack(alignment: .leading) {
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                        Rectangle()
+                            .fill(Color.green)
+                            .frame(width: 140 * hpRatio(current: playerHP, max: playerMaxHP))
                     }
-                    .frame(width: 60)
-                }
-                
-                // 中间战斗效果
-                ZStack {
-                    if showDamageText {
-                        VStack(spacing: 2) {
-                            Text(damageIsPlayer ? "→" : "←")
-                                .font(.system(size: 16))
-                                .foregroundColor(.yellow)
-                            Text(damageText)
-                                .font(.system(size: Constants.FontSize.medium, weight: .bold))
-                                .foregroundColor(damageText.contains("暴击") ? .orange : .white)
-                        }
-                        .transition(.scale.combined(with: .opacity))
-                    }
-                }
-                .frame(width: 60, height: 40)
-                
-                // 对手侧
-                VStack(spacing: 4) {
-                    Text(opponent.emoji)
-                        .font(.system(size: 36))
+                    .frame(width: 140, height: 6)
+                    .cornerRadius(3)
                     
-                    // HP条
-                    VStack(spacing: 2) {
-                        Text("\(opponentHP)/\(opponentMaxHP)")
-                            .font(.system(size: 8, design: .monospaced))
-                            .foregroundColor(.white)
-                        
-                        GeometryReader { geo in
-                            ZStack(alignment: .leading) {
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(height: 6)
-                                    .cornerRadius(3)
-                                
-                                Rectangle()
-                                    .fill(hpColor(current: opponentHP, max: opponentMaxHP))
-                                    .frame(width: geo.size.width * hpRatio(current: opponentHP, max: opponentMaxHP), height: 6)
-                                    .cornerRadius(3)
-                                    .animation(.easeInOut(duration: 0.3), value: opponentHP)
-                            }
-                        }
-                        .frame(height: 6)
+                    HStack {
+                        Text("你")
+                            .font(.system(size: 10))
+                        Spacer()
+                        Text("\(playerHP) HP")
+                            .font(.system(size: 10, design: .monospaced))
                     }
-                    .frame(width: 60)
+                    .padding(.horizontal, 20)
                 }
             }
-            .padding(.horizontal)
             
-            // 战斗日志
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 4) {
-                        ForEach(Array(displayedRounds.enumerated()), id: \.offset) { index, round in
-                            battleLogRow(round: round)
-                                .id(index)
-                        }
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                }
-                .frame(maxHeight: 100)
-                .background(Color.black.opacity(0.3))
-                .cornerRadius(8)
-                .padding(.horizontal)
-                .onChange(of: displayedRounds.count) { _ in
-                    if let lastIndex = displayedRounds.indices.last {
-                        withAnimation {
-                            proxy.scrollTo(lastIndex, anchor: .bottom)
-                        }
-                    }
-                }
+            // 伤害飘字
+            if showDamageText {
+                Text(damageText)
+                    .font(.system(size: 18, weight: .black))
+                    .foregroundColor(damageText.contains("暴击") ? .orange : .white)
+                    .transition(.asymmetric(
+                        insertion: .scale.combined(with: .opacity).combined(with: .move(edge: .bottom)),
+                        removal: .opacity
+                    ))
+                    .zIndex(1)
             }
             
             Spacer()
             
-            // 跳过按钮
             Button(action: skipToResult) {
-                Text("跳过动画")
-                    .font(.system(size: Constants.FontSize.small))
-                    .foregroundColor(.white.opacity(0.6))
+                Text("跳过")
+                    .font(.system(size: 10))
+                    .foregroundColor(.white.opacity(0.4))
             }
-            .padding(.bottom, 8)
+            .buttonStyle(.plain)
+            .padding(.bottom, 4)
         }
-        .padding(.top, 8)
+        .padding(.top, 10)
     }
     
     // MARK: - 结果阶段
@@ -506,7 +462,6 @@ struct BattleView: View {
     
     private func playNextRound() {
         guard currentRoundIndex < rounds.count else {
-            // 战斗结束
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 withAnimation {
                     battlePhase = .result
@@ -516,43 +471,75 @@ struct BattleView: View {
         }
         
         let round = rounds[currentRoundIndex]
+        let isPlayerAttacking = round.isPlayerAttack
         
-        // 显示伤害文字
-        withAnimation(.easeInOut(duration: 0.2)) {
-            showDamageText = true
-            damageIsPlayer = round.isPlayerAttack
-            damageText = round.isCritical ? "暴击! -\(round.damage)" : "-\(round.damage)"
+        // 1. 攻击位移动画
+        withAnimation(.easeIn(duration: 0.2)) {
+            if isPlayerAttacking {
+                playerOffset = -20
+            } else {
+                opponentOffset = 20
+            }
         }
         
-        // 更新HP
-        withAnimation(.easeInOut(duration: 0.3)) {
-            playerHP = round.playerHPAfter
-            opponentHP = round.opponentHPAfter
-        }
-        
-        // 隐藏伤害文字并播放下一回合
-        roundTimer = Timer.scheduledTimer(withTimeInterval: 0.7, repeats: false) { _ in
-            withAnimation {
-                showDamageText = false
+        // 2. 命中效果
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            // 震动
+            withAnimation(.default.repeatCount(3, autoreverses: true)) {
+                shakeOffset = 5
             }
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                currentRoundIndex += 1
-                playNextRound()
+            // 受击闪烁
+            withAnimation(.easeInOut(duration: 0.1).repeatCount(2, autoreverses: true)) {
+                if isPlayerAttacking {
+                    opponentFlash = true
+                } else {
+                    playerFlash = true
+                }
+            }
+            
+            // 显示伤害
+            withAnimation(.spring()) {
+                showDamageText = true
+                damageText = round.isCritical ? "💥 \(round.damage)" : "-\(round.damage)"
+            }
+            
+            // 更新HP
+            withAnimation(.easeInOut(duration: 0.3)) {
+                playerHP = round.playerHPAfter
+                opponentHP = round.opponentHPAfter
+            }
+            
+            // 重置位移
+            withAnimation(.easeOut(duration: 0.2)) {
+                playerOffset = 0
+                opponentOffset = 0
+                shakeOffset = 0
+            }
+            
+            // 3. 准备下一回合
+            roundTimer = Timer.scheduledTimer(withTimeInterval: 0.6, repeats: false) { _ in
+                withAnimation {
+                    showDamageText = false
+                    playerFlash = false
+                    opponentFlash = false
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    currentRoundIndex += 1
+                    playNextRound()
+                }
             }
         }
     }
     
     private func skipToResult() {
         roundTimer?.invalidate()
-        
-        // 直接跳到最终状态
         if let lastRound = rounds.last {
             playerHP = lastRound.playerHPAfter
             opponentHP = lastRound.opponentHPAfter
         }
         currentRoundIndex = rounds.count - 1
-        
         withAnimation {
             battlePhase = .result
         }

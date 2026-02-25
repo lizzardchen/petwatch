@@ -9,6 +9,9 @@ class GameStateManager: ObservableObject {
     // HealthKit管理器
     let healthManager = HealthManager()
     
+    // Firebase管理器
+    let firebaseManager = FirebaseManager.shared
+    
     // 快乐值和经验定时器
     private var gameTimer: Timer?
     private var lastUpdateTime: Date
@@ -210,8 +213,8 @@ class GameStateManager: ObservableObject {
         // 1. 基础挂机经验（1经验/秒）
         let baseExp: Double = 1.0
         
-        // 2. 双倍经验卡加成（暂时未实现，TODO: 添加经验卡系统）
-        let expCardMultiplier: Double = 1.0  // 使用经验卡时为2.0
+        // 2. 双倍经验卡加成
+        let expCardMultiplier: Double = player.isExpCardActive ? 2.0 : 1.0
         let baseWithCard = baseExp * expCardMultiplier
         
         // 3. 建筑加成（从升级物品获取）
@@ -260,11 +263,17 @@ class GameStateManager: ObservableObject {
     
     /// 添加经验并自动升级
     func addExperience(_ amount: Int) {
+        let oldLevel = player.currentPet.level
         player.currentPet.exp += amount
         
         // 自动升级
         while player.currentPet.canLevelUp() {
             player.currentPet.levelUp()
+        }
+        
+        // 升级后同步排行榜
+        if player.currentPet.level != oldLevel {
+            syncToFirebase()
         }
     }
     
@@ -362,6 +371,10 @@ class GameStateManager: ObservableObject {
             print("✨ 每日登录奖励：+20钻石 (连续\(player.loginStreakDays)天)")
         }
         
+        // 重置每日挑战次数
+        player.dailyChallenges = Constants.Game.dailyChallenges
+        print("⚔️ 每日挑战次数已重置为 \(Constants.Game.dailyChallenges)")
+        
         // 更新登录数据
         player.lastLoginDate = today
         player.totalLoginDays += 1
@@ -421,6 +434,55 @@ class GameStateManager: ObservableObject {
     func updatePetName(_ newName: String) {
         player.currentPet.name = newName
         savePlayer()
+    }
+    
+    // MARK: - 双倍经验卡
+    
+    /// 激活双倍经验卡
+    /// - Parameter durationSeconds: 持续时长（秒）
+    func activateExpCard(durationSeconds: Int) {
+        player.activateExpCard(durationSeconds: durationSeconds)
+        savePlayer()
+    }
+    
+    /// 用钻石购买双倍经验卡
+    /// - Parameters:
+    ///   - durationSeconds: 持续时长（秒）
+    ///   - cost: 钻石费用
+    /// - Returns: 是否购买成功
+    func purchaseExpCard(durationSeconds: Int, cost: Int) -> Bool {
+        guard spendDiamonds(cost) else { return false }
+        activateExpCard(durationSeconds: durationSeconds)
+        return true
+    }
+    
+    /// 本地生成对手（Firebase无数据时的备选）
+    func generateOpponents() -> [Opponent] {
+        let pet = player.currentPet
+        let npcNames = ["小明", "小红", "小刚", "阿花", "大壮"]
+        let npcEmojis = ["🐱", "😺", "🐶", "🐰", "🦊"]
+        var opponents: [Opponent] = []
+        for i in 0..<3 {
+            let levelVariance = max(1, Int(Double(pet.level) * 0.3))
+            let opponentLevel = max(1, min(99, pet.level + Int.random(in: -levelVariance...levelVariance)))
+            let opponentPower = max(1, Int(Double(opponentLevel) * Double.random(in: 0.8...1.5)))
+            let winRate = Double.random(in: 0.05...0.30)
+            let diamondReward = max(10, opponentPower + Int.random(in: -10...20))
+            opponents.append(Opponent(
+                name: npcNames[i], emoji: npcEmojis[i],
+                level: opponentLevel, power: opponentPower,
+                wins: Int.random(in: 0...20), winRate: winRate,
+                diamondReward: diamondReward
+            ))
+        }
+        return opponents.sorted { $0.power < $1.power }
+    }
+    
+    // MARK: - Firebase 数据同步
+    
+    /// 同步玩家数据到 Firebase 排行榜
+    func syncToFirebase() {
+        firebaseManager.syncPlayerData(pet: player.currentPet, wins: player.wins)
     }
     
     // MARK: - 战斗系统
@@ -531,6 +593,7 @@ class GameStateManager: ObservableObject {
         player.addDiamonds(diamondReward)
         
         savePlayer()
+        syncToFirebase()
         
         return (playerWon, rounds, diamondReward)
     }
@@ -546,6 +609,7 @@ class GameStateManager: ObservableObject {
         player.currentPet = player.currentPet.rebirth()
         player.addDiamonds(reward)
         savePlayer()
+        syncToFirebase()
         
         return reward
     }

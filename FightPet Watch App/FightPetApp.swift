@@ -6,9 +6,15 @@
 //
 
 import SwiftUI
+import FirebaseCore
 
 @main
 struct FightPet_Watch_AppApp: App {
+    
+    init() {
+        FirebaseManager.configure()
+    }
+    
     var body: some Scene {
         WindowGroup {
             MainView()

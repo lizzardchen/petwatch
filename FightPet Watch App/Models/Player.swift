@@ -20,6 +20,33 @@ struct Player: Codable {
     var totalLoginDays: Int = 0           // 总登录天数
     var hasClaimedTodayReward: Bool = false  // 今日是否已领取奖励
     
+    // 双倍经验卡
+    var expCardExpireDate: Date? = nil    // 经验卡到期时间，nil表示未激活
+    
+    /// 经验卡是否有效
+    var isExpCardActive: Bool {
+        guard let expireDate = expCardExpireDate else { return false }
+        return expireDate > Date()
+    }
+    
+    /// 经验卡剩余秒数
+    var expCardRemainingSeconds: Int {
+        guard let expireDate = expCardExpireDate, expireDate > Date() else { return 0 }
+        return Int(expireDate.timeIntervalSinceNow)
+    }
+    
+    /// 激活/续期经验卡（叠加时长）
+    mutating func activateExpCard(durationSeconds: Int) {
+        let now = Date()
+        if let current = expCardExpireDate, current > now {
+            // 已有有效卡，叠加时长
+            expCardExpireDate = current.addingTimeInterval(TimeInterval(durationSeconds))
+        } else {
+            // 无卡或已过期，从现在开始
+            expCardExpireDate = now.addingTimeInterval(TimeInterval(durationSeconds))
+        }
+    }
+    
     init(diamonds: Int = 50,
          currentPet: Pet? = nil,
          rank: Int = 999,

@@ -103,13 +103,23 @@ struct PetCard: View {
                 
                 Spacer()
                 
-                HStack(spacing: screenWidth * 0.015) {
-                    Text("🌙睡眠+\(sleepBonus)")
-                        .font(.system(size: statFontSize))
-                        .minimumScaleFactor(0.5)
-                        .fixedSize(horizontal: true, vertical: false)
+                if gameState.player.isExpCardActive {
+                    HStack(spacing: screenWidth * 0.015) {
+                        Text("⭐×2")
+                            .font(.system(size: statFontSize, weight: .bold))
+                            .minimumScaleFactor(0.5)
+                            .fixedSize(horizontal: true, vertical: false)
+                    }
+                    .foregroundColor(.yellow)
+                } else {
+                    HStack(spacing: screenWidth * 0.015) {
+                        Text("🌙睡眠+\(sleepBonus)")
+                            .font(.system(size: statFontSize))
+                            .minimumScaleFactor(0.5)
+                            .fixedSize(horizontal: true, vertical: false)
+                    }
+                    .foregroundColor(.white.opacity(0.8))
                 }
-                .foregroundColor(.white.opacity(0.8))
             }
             .padding(.horizontal, hPadding)
             .padding(.vertical, vPadding)
