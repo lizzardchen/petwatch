@@ -23,6 +23,15 @@ struct Player: Codable {
     // 双倍经验卡
     var expCardExpireDate: Date? = nil    // 经验卡到期时间，nil表示未激活
     
+    // 重生孵化状态
+    var rebirthSourcePet: Pet? = nil      // 发起重生时的原宠物快照
+    var hatchEndDate: Date? = nil         // 孵化结束时间
+    
+    var isHatching: Bool {
+        guard let hatchEndDate else { return false }
+        return hatchEndDate > Date()
+    }
+    
     /// 经验卡是否有效
     var isExpCardActive: Bool {
         guard let expireDate = expCardExpireDate else { return false }
@@ -76,6 +85,29 @@ struct Player: Codable {
     @available(*, deprecated, message: "建筑系统不产出钻石，只有升级消耗")
     func hourlyDiamondIncome() -> Int {
         return upgradeItems.reduce(0) { $0 + $1.currentBonus() }
+    }
+    
+    /// 开始孵化流程
+    mutating func startHatching(from sourcePet: Pet, duration: TimeInterval) {
+        rebirthSourcePet = sourcePet
+        hatchEndDate = Date().addingTimeInterval(duration)
+    }
+    
+    /// 减少孵化剩余时间（用于快速孵化）
+    mutating func reduceHatchingTime(by seconds: TimeInterval) {
+        guard let hatchEndDate else { return }
+        self.hatchEndDate = hatchEndDate.addingTimeInterval(-seconds)
+    }
+    
+    /// 立即完成孵化
+    mutating func completeHatchingNow() {
+        hatchEndDate = Date()
+    }
+    
+    /// 清理孵化状态
+    mutating func clearHatchingState() {
+        rebirthSourcePet = nil
+        hatchEndDate = nil
     }
     
     /// 添加钻石

@@ -169,7 +169,7 @@ struct MainView: View {
                 }
             }
         }
-        .sheet(isPresented: $showRanking) {
+        .fullScreenCover(isPresented: $showRanking) {
             RankingView()
                 .environmentObject(gameState)
         }

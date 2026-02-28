@@ -54,11 +54,11 @@ struct UpgradeItem: Identifiable, Codable {
     func unlockRequirement() -> String {
         switch type {
         case .petBed:
-            return "" // 宠物床是默认解锁的
+            return ""
         case .foodBowl:
-            return "需要宠物床 满"
+            return "宠物床 Lv.10 解锁"
         case .toy:
-            return "需要食物碗 满"
+            return "食物碗 Lv.10 解锁"
         }
     }
     

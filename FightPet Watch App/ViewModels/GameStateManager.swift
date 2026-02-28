@@ -408,21 +408,35 @@ class GameStateManager: ObservableObject {
         savePlayer()
     }
     
+    /// 检查升级模块是否已解锁
+    func isUpgradeItemUnlocked(_ type: UpgradeItemType) -> Bool {
+        switch type {
+        case .petBed:
+            return true
+        case .foodBowl:
+            return (getUpgradeItem(type: .petBed)?.level ?? 0) >= 10
+        case .toy:
+            return (getUpgradeItem(type: .foodBowl)?.level ?? 0) >= 10
+        }
+    }
+    
     /// 升级物品
     func upgradeItem(_ item: UpgradeItem) -> Bool {
-        let cost = item.upgradeCost()
-        if spendDiamonds(cost) {
-            if let index = player.upgradeItems.firstIndex(where: { $0.id == item.id }) {
-                if item.isUnlocked {
-                    player.upgradeItems[index].level += 1
-                } else {
-                    player.upgradeItems[index].level = 1
-                }
-                savePlayer()
-                return true
-            }
+        guard isUpgradeItemUnlocked(item.type) else { return false }
+        guard let index = player.upgradeItems.firstIndex(where: { $0.id == item.id }) else { return false }
+        guard player.upgradeItems[index].canUpgrade() else { return false }
+        
+        let cost = player.upgradeItems[index].upgradeCost()
+        guard spendDiamonds(cost) else { return false }
+        
+        if player.upgradeItems[index].isUnlocked {
+            player.upgradeItems[index].level += 1
+        } else {
+            player.upgradeItems[index].level = 1
         }
-        return false
+        
+        savePlayer()
+        return true
     }
     
     /// 获取升级物品
@@ -600,17 +614,57 @@ class GameStateManager: ObservableObject {
     
     // MARK: - 重生系统
     
-    /// 执行宠物重生
-    /// - Returns: 重生获得的钻石奖励数量，nil表示重生失败
-    func rebirthPet() -> Int? {
+    /// 开始重生孵化流程（Lv.99 可执行）
+    /// - Returns: 重生获得的钻石奖励数量，nil 表示失败
+    func startRebirthHatching() -> Int? {
         guard player.currentPet.canRebirth() else { return nil }
+        guard !player.isHatching else { return nil }
         
-        let reward = player.currentPet.quality.rebirthDiamondReward
-        player.currentPet = player.currentPet.rebirth()
+        let sourcePet = player.currentPet
+        let reward = sourcePet.quality.rebirthDiamondReward
+        
+        // 先发放重生奖励，再进入孵化
         player.addDiamonds(reward)
+        player.startHatching(from: sourcePet, duration: 4 * 60 * 60) // 默认 4 小时
+        
         savePlayer()
         syncToFirebase()
-        
         return reward
+    }
+    
+    /// 获取孵化剩余秒数
+    func hatchingRemainingSeconds() -> Int {
+        guard let hatchEndDate = player.hatchEndDate else { return 0 }
+        return max(0, Int(hatchEndDate.timeIntervalSinceNow))
+    }
+    
+    /// 快速孵化（消耗钻石）
+    /// 规则：每 10 钻石减少 10 分钟，最少消耗 10 钻石
+    @discardableResult
+    func speedUpHatching() -> Bool {
+        guard player.isHatching else { return false }
+        let cost = 10
+        guard spendDiamonds(cost) else { return false }
+        player.reduceHatchingTime(by: 10 * 60)
+        savePlayer()
+        return true
+    }
+    
+    /// 完成孵化并生成新宠
+    /// 保持初始设定：智/体/力总和必须等于品质总点数，且每项 > 0
+    @discardableResult
+    func completeHatchingIfReady() -> Bool {
+        guard let sourcePet = player.rebirthSourcePet else { return false }
+        guard hatchingRemainingSeconds() == 0 else { return false }
+        
+        // 按品质随机生成新属性（不突破品质总点数）
+        let newPet = sourcePet.rebirth()
+        
+        player.currentPet = newPet
+        player.clearHatchingState()
+        
+        savePlayer()
+        syncToFirebase()
+        return true
     }
 }

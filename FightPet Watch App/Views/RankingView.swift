@@ -6,78 +6,50 @@ struct RankingView: View {
     @EnvironmentObject var gameState: GameStateManager
     @State private var showOpponentSelection = false
     @State private var firebaseRankings: [RankingPlayer] = []
+    @State private var challengeOpponents: [Opponent] = []
     @State private var isLoading = false
-    
+
     /// 合并 Firebase 数据与玩家自身数据，生成最终排行榜
     private var mergedRankings: [(rank: Int, name: String, emoji: String, level: Int, power: Int, wins: Int, isCurrentPlayer: Bool)] {
         let pet = gameState.player.currentPet
         let deviceID = gameState.firebaseManager.currentDeviceID
-        
+
         var all: [(rank: Int, name: String, emoji: String, level: Int, power: Int, wins: Int, isCurrentPlayer: Bool)] = []
-        
+
         // 添加玩家自己
         all.append((rank: 0, name: pet.name, emoji: pet.emoji, level: pet.level, power: pet.power, wins: gameState.player.wins, isCurrentPlayer: true))
-        
+
         // 添加 Firebase 上的其他玩家（排除自己）
         for p in firebaseRankings where p.id != deviceID {
             all.append((rank: 0, name: p.name, emoji: p.emoji, level: p.level, power: p.power, wins: p.wins, isCurrentPlayer: false))
         }
-        
+
         // 按战力降序排列
         all.sort { $0.power > $1.power }
-        
+
         // 分配排名
         for i in 0..<all.count {
             all[i].rank = i + 1
         }
-        
+
         return all
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
-            // 标题栏
-            HStack {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.white)
-                }
-                
+            rankingHeader
+
+            if isLoading && firebaseRankings.isEmpty {
+                Spacer(minLength: 8)
+                ProgressView()
+                    .tint(.white)
+                Text("加载排行榜...")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
                 Spacer()
-                
-                HStack(spacing: 6) {
-                    Text("🏆")
-                    Text("排行榜")
-                        .font(.system(size: Constants.FontSize.large, weight: .bold))
-                }
-                .foregroundColor(.white)
-                
-                Spacer()
-                
-                // 刷新按钮
-                Button(action: loadRankings) {
-                    Image(systemName: isLoading ? "arrow.clockwise" : "arrow.clockwise")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.8))
-                        .rotationEffect(.degrees(isLoading ? 360 : 0))
-                        .animation(isLoading ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: isLoading)
-                }
-                .frame(width: 30)
-            }
-            .padding()
-            .background(Constants.Colors.darkGray.opacity(0.3))
-            
-            ScrollView {
-                VStack(spacing: 12) {
-                    if isLoading && firebaseRankings.isEmpty {
-                        ProgressView()
-                            .tint(.white)
-                            .padding()
-                        Text("加载排行榜...")
-                            .font(.system(size: Constants.FontSize.small))
-                            .foregroundColor(.white.opacity(0.6))
-                    } else {
+            } else {
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 0) {
                         ForEach(mergedRankings, id: \.rank) { item in
                             RankingCard(
                                 rank: item.rank,
@@ -89,82 +61,161 @@ struct RankingView: View {
                                 isCurrentPlayer: item.isCurrentPlayer
                             )
                         }
-                        
+
                         if firebaseRankings.isEmpty {
                             Text("暂无其他玩家数据")
-                                .font(.system(size: Constants.FontSize.small))
-                                .foregroundColor(.white.opacity(0.4))
-                                .padding()
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(.white.opacity(0.45))
+                                .padding(.top, 10)
                         }
                     }
+                    .padding(.top, 2)
+                    .padding(.horizontal, 6)
+                    .padding(.bottom, 2)
                 }
-                .padding()
-                
-                // 今日剩余挑战次数
-                HStack(spacing: 8) {
-                    Text("今日剩余挑战次数")
-                        .font(.system(size: Constants.FontSize.small))
-                        .foregroundColor(.white.opacity(0.8))
-                    
-                    HStack(spacing: 4) {
-                        ForEach(0..<3) { index in
-                            Circle()
-                                .fill(index < gameState.player.dailyChallenges ? Color.green : Color.gray.opacity(0.3))
-                                .frame(width: 8, height: 8)
-                        }
-                    }
-                }
-                .padding()
-                
-                // 快乐值不足提示
-                if !gameState.canBattle() {
-                    HStack(spacing: 6) {
-                        Text("⚠️")
-                        Text("快乐值低于30，无法参与战斗")
-                            .font(.system(size: Constants.FontSize.small))
-                    }
-                    .foregroundColor(.orange)
-                    .padding(.horizontal)
-                }
-                
-                // 随机挑战按钮
-                GradientButton(
-                    title: !gameState.hasRemainingChallenges() ? "次数已用完" : (gameState.canBattle() ? "随机挑战" : "快乐值不足"),
-                    icon: "⚔️",
-                    gradient: LinearGradient(
-                        colors: (gameState.canBattle() && gameState.hasRemainingChallenges())
-                            ? [Color.red, Color.red.opacity(0.8)]
-                            : [Color.gray, Color.gray.opacity(0.8)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                ) {
-                    if gameState.canBattle() && gameState.hasRemainingChallenges() {
-                        showOpponentSelection = true
-                    }
-                }
-                .disabled(!gameState.canBattle() || !gameState.hasRemainingChallenges())
-                .padding(.horizontal)
-                .padding(.bottom, 20)
             }
+
+            battleSection
         }
-        .background(Constants.Colors.darkBackground)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(red: 0.03, green: 0.08, blue: 0.19),
+                    Color(red: 0.06, green: 0.12, blue: 0.22),
+                    Color(red: 0.09, green: 0.15, blue: 0.26)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+        )
         .onAppear {
             loadRankings()
-            // 上传自己的最新数据
             gameState.syncToFirebase()
         }
         .sheet(isPresented: $showOpponentSelection) {
-            OpponentSelectionView(firebaseRankings: firebaseRankings)
+            OpponentSelectionView(opponents: challengeOpponents)
                 .environmentObject(gameState)
         }
     }
-    
+
+    private var rankingHeader: some View {
+        HStack(spacing: 6) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white.opacity(0.92))
+                    .frame(width: 24, height: 24)
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+
+            Spacer(minLength: 0)
+
+            HStack(spacing: 4) {
+                Image(systemName: "trophy")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.yellow)
+                Text("Rank")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.95))
+            }
+
+            Spacer(minLength: 0)
+
+            Button(action: loadRankings) {
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white.opacity(0.85))
+                    .rotationEffect(.degrees(isLoading ? 360 : 0))
+                    .animation(isLoading ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: isLoading)
+                    .frame(width: 24, height: 24)
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 8)
+        .padding(.top, 0)
+        .padding(.bottom, 0)
+    }
+
+    private var battleSection: some View {
+        VStack(spacing: 2) {
+            HStack(spacing: 3) {
+                Text("今日剩余挑战次数")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.white.opacity(0.74))
+
+                ForEach(0..<3) { index in
+                    Circle()
+                        .fill(index < gameState.player.dailyChallenges ? Color.green : Color.gray.opacity(0.35))
+                        .frame(width: 5, height: 5)
+                }
+            }
+
+            Button(action: {
+                if gameState.canBattle() && gameState.hasRemainingChallenges() {
+                    loadChallengeOpponentsAndPresent()
+                }
+            }) {
+                HStack(spacing: 4) {
+                    if !gameState.canBattle() {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 9, weight: .bold))
+                    } else {
+                        Image(systemName: "sword")
+                            .font(.system(size: 9, weight: .bold))
+                    }
+
+                    Text(buttonTitle)
+                        .font(.system(size: 10, weight: .semibold))
+                }
+                .foregroundColor(buttonEnabled ? .white : .white.opacity(0.55))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 5)
+                .background(
+                    LinearGradient(
+                        colors: buttonEnabled
+                            ? [Color(red: 1.0, green: 0.16, blue: 0.53), Color(red: 1.0, green: 0.0, blue: 0.42)]
+                            : [Color.gray.opacity(0.7), Color.gray.opacity(0.56)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .disabled(!buttonEnabled)
+        }
+        .padding(.horizontal, 8)
+        .padding(.top, 1)
+        .padding(.bottom, 2)
+    }
+
+    private var buttonEnabled: Bool {
+        gameState.canBattle() && gameState.hasRemainingChallenges()
+    }
+
+    private var buttonTitle: String {
+        if !gameState.hasRemainingChallenges() { return "次数已用完" }
+        if !gameState.canBattle() { return "快乐值不足" }
+        return "Battle"
+    }
+
     private func loadRankings() {
         isLoading = true
         gameState.firebaseManager.fetchRankings {
             isLoading = false
             firebaseRankings = gameState.firebaseManager.rankings
+        }
+    }
+
+    private func loadChallengeOpponentsAndPresent() {
+        gameState.firebaseManager.fetchOpponents(playerPower: gameState.player.currentPet.power) { opponents in
+            self.challengeOpponents = opponents.isEmpty ? gameState.generateOpponents() : opponents
+            self.showOpponentSelection = true
         }
     }
 }
@@ -178,78 +229,75 @@ struct RankingCard: View {
     let power: Int
     let wins: Int
     let isCurrentPlayer: Bool
-    
-    var rankColor: Color {
+
+    private var rankColor: Color {
         switch rank {
-        case 1: return .yellow
-        case 2: return .gray
-        case 3: return .orange
-        default: return Constants.Colors.darkGray
+        case 1: return Color(red: 1.0, green: 0.82, blue: 0.05)
+        case 2: return Color(red: 0.82, green: 0.85, blue: 0.9)
+        case 3: return Color(red: 1.0, green: 0.38, blue: 0.0)
+        default: return Color(red: 0.25, green: 0.31, blue: 0.42)
         }
     }
-    
+
     var body: some View {
-        HStack(spacing: 12) {
-            // 排名
-            ZStack {
-                Circle()
-                    .fill(rankColor)
-                    .frame(width: 36, height: 36)
-                
-                Text("\(rank)")
-                    .font(.system(size: Constants.FontSize.large, weight: .bold))
-                    .foregroundColor(.white)
-            }
-            
-            // 头像
+        HStack(spacing: 8) {
+            Text("\(rank)")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.black.opacity(rank <= 3 ? 0.9 : 0.75))
+                .frame(width: 24, height: 24)
+                .background(rankColor)
+                .clipShape(Circle())
+
             Text(emoji)
-                .font(.system(size: 32))
-            
-            // 信息
-            VStack(alignment: .leading, spacing: 2) {
+                .font(.system(size: 20))
+
+            VStack(alignment: .leading, spacing: 1) {
                 Text(name)
-                    .font(.system(size: Constants.FontSize.medium, weight: .semibold))
+                    .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(.white)
-                
-                HStack(spacing: 12) {
-                    HStack(spacing: 4) {
-                        Text("⭐")
-                        Text("Lv.\(level)")
-                    }
-                    
-                    HStack(spacing: 4) {
-                        Text("🏆")
-                        Text("\(wins)胜")
-                    }
+                    .lineLimit(1)
+
+                HStack(spacing: 8) {
+                    Text("☆ Lv.\(level)")
+                        .lineLimit(1)
+                    Text("· 🏆 \(wins)W")
+                        .lineLimit(1)
                 }
-                .font(.system(size: Constants.FontSize.small))
-                .foregroundColor(.white.opacity(0.8))
+                .font(.system(size: 8, weight: .medium))
+                .foregroundColor(.white.opacity(0.62))
             }
-            
-            Spacer()
-            
-            // 战力
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("⚡ \(power)")
-                    .font(.system(size: Constants.FontSize.large, weight: .bold))
-                    .foregroundColor(.orange)
+
+            Spacer(minLength: 4)
+
+            HStack(spacing: 2) {
+                Image(systemName: "bolt")
+                    .font(.system(size: 10, weight: .bold))
+                Text("\(power)")
+                    .font(.system(size: 10, weight: .bold))
             }
+            .foregroundColor(Color(red: 1.0, green: 0.58, blue: 0.0))
         }
-        .padding()
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .frame(maxWidth: .infinity)
         .background(
-            isCurrentPlayer
-                ? LinearGradient(
-                    colors: [Constants.Colors.blue, Constants.Colors.purple],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                  )
-                : LinearGradient(
-                    colors: [Constants.Colors.darkGray.opacity(0.6), Constants.Colors.darkGray.opacity(0.4)],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                  )
+            Group {
+                if isCurrentPlayer {
+                    LinearGradient(
+                        colors: [Color(red: 0.31, green: 0.25, blue: 0.95), Color(red: 0.58, green: 0.2, blue: 0.97)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                } else {
+                    Color.white.opacity(0.05)
+                }
+            }
         )
-        .cornerRadius(Constants.CornerRadius.large)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.white.opacity(isCurrentPlayer ? 0.0 : 0.06), lineWidth: 1)
+        )
     }
 }
 
@@ -257,10 +305,8 @@ struct RankingCard: View {
 struct OpponentSelectionView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var gameState: GameStateManager
-    let firebaseRankings: [RankingPlayer]
-    @State private var opponents: [Opponent] = []
-    @State private var isLoading = false
-    
+    let opponents: [Opponent]
+
     var body: some View {
         VStack(spacing: 0) {
             // 标题栏
@@ -270,30 +316,23 @@ struct OpponentSelectionView: View {
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(.white)
                 }
-                
+
                 Spacer()
-                
+
                 Text("选择对手")
                     .font(.system(size: Constants.FontSize.large, weight: .bold))
                     .foregroundColor(.white)
-                
+
                 Spacer()
-                
+
                 Color.clear
                     .frame(width: 30)
             }
             .padding()
-            
+
             ScrollView {
                 VStack(spacing: 12) {
-                    if isLoading {
-                        ProgressView()
-                            .tint(.white)
-                            .padding()
-                        Text("寻找对手...")
-                            .font(.system(size: Constants.FontSize.small))
-                            .foregroundColor(.white.opacity(0.6))
-                    } else if opponents.isEmpty {
+                    if opponents.isEmpty {
                         Text("暂无可挑战玩家")
                             .font(.system(size: Constants.FontSize.small))
                             .foregroundColor(.white.opacity(0.5))
@@ -305,7 +344,7 @@ struct OpponentSelectionView: View {
                     }
                 }
                 .padding(.horizontal)
-                
+
                 // 提示文字
                 VStack(spacing: 4) {
                     Text("胜利获得更多钻石")
@@ -316,32 +355,6 @@ struct OpponentSelectionView: View {
             }
         }
         .background(Constants.Colors.darkBackground)
-        .onAppear {
-            loadOpponents()
-        }
-    }
-    
-    private func loadOpponents() {
-        let playerPower = gameState.player.currentPet.power
-        let deviceID = gameState.firebaseManager.currentDeviceID
-        
-        // 过滤掉自己
-        let others = firebaseRankings.filter { $0.id != deviceID }
-        
-        if !others.isEmpty {
-            // 需求：根据排行榜里面的选择的宠物去获取数据
-            // 我们选出战力最接近的3个作为对手
-            let sorted = others.sorted { abs($0.power - playerPower) < abs($1.power - playerPower) }
-            let selected = Array(sorted.prefix(3))
-            opponents = selected.map { p in
-                // 奖励根据对方战力动态计算
-                let reward = max(10, Int(Double(p.power) * 0.1) + 10)
-                return p.toOpponent(diamondReward: reward)
-            }.sorted { $0.power < $1.power }
-        } else {
-            // 备选：本地生成
-            opponents = gameState.generateOpponents()
-        }
     }
 }
 
@@ -350,7 +363,7 @@ struct OpponentCard: View {
     let opponent: Opponent
     @ObservedObject var gameState: GameStateManager
     @State private var showBattle = false
-    
+
     var body: some View {
         Button(action: {
             showBattle = true
@@ -359,13 +372,13 @@ struct OpponentCard: View {
                 // 头像
                 Text(opponent.emoji)
                     .font(.system(size: 32))
-                
+
                 // 信息
                 VStack(alignment: .leading, spacing: 2) {
                     Text(opponent.name)
                         .font(.system(size: Constants.FontSize.small, weight: .semibold))
                         .foregroundColor(.white)
-                    
+
                     HStack(spacing: 8) {
                         Text("⚡ \(opponent.power)")
                             .foregroundColor(.orange)
@@ -374,9 +387,9 @@ struct OpponentCard: View {
                     }
                     .font(.system(size: 10))
                 }
-                
+
                 Spacer()
-                
+
                 Text("💎\(opponent.diamondReward)")
                     .font(.system(size: Constants.FontSize.small, weight: .bold))
                     .foregroundColor(.cyan)

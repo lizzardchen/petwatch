@@ -53,15 +53,27 @@ struct BuildingDetailView: View {
                             .background(Color.white.opacity(0.3))
                             .padding(.vertical, 8)
                         
-                        // 升级后等级
-                        if currentItem.canUpgrade() {
+                        if !isUnlockedByOrder {
+                            Text(currentItem.unlockRequirement())
+                                .font(.system(size: Constants.FontSize.medium, weight: .semibold))
+                                .foregroundColor(.orange)
+                                .padding()
+                        } else if currentItem.canUpgrade() {
+                            // 升级后等级
                             InfoSection(title: "升级至", value: "Lv.\(currentItem.level + 1)")
                             
-                            // 升级后经验加成
-                            let bonusIncrease = currentItem.nextExpBonusPerSecond() - currentItem.expBonusPerSecond()
+                            // 升级后经验加成（显示当前 -> 下一等级总值）
+                            let currentPerMinute = currentItem.expBonusPerSecond() * 60
+                            let nextPerMinute = currentItem.nextExpBonusPerSecond() * 60
+                            let increasePerMinute = nextPerMinute - currentPerMinute
                             InfoSection(
                                 title: "产出加成",
-                                value: String(format: "+ → +%.2f", bonusIncrease * 60),
+                                value: String(format: "+%.2f → +%.2f /分钟", currentPerMinute, nextPerMinute),
+                                valueColor: .green
+                            )
+                            InfoSection(
+                                title: "本次提升",
+                                value: String(format: "+%.2f /分钟", increasePerMinute),
                                 valueColor: .green
                             )
                             
@@ -96,13 +108,16 @@ struct BuildingDetailView: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .background(canAffordUpgrade ? Constants.Colors.purple : Color.gray)
+                            .background(canUpgradeNow ? Constants.Colors.purple : Color.gray)
                             .cornerRadius(Constants.CornerRadius.large)
                         }
-                        .disabled(!canAffordUpgrade)
+                        .disabled(!canUpgradeNow)
                         
-                        // 钻石不足提示
-                        if !canAffordUpgrade {
+                        if !isUnlockedByOrder {
+                            Text(currentItem.unlockRequirement())
+                                .font(.system(size: Constants.FontSize.small))
+                                .foregroundColor(.orange)
+                        } else if !canAffordUpgrade {
                             Text("钻石不足")
                                 .font(.system(size: Constants.FontSize.small))
                                 .foregroundColor(.red)
@@ -125,17 +140,20 @@ struct BuildingDetailView: View {
         }
     }
     
+    private var isUnlockedByOrder: Bool {
+        gameState.isUpgradeItemUnlocked(currentItem.type)
+    }
+    
     private var canAffordUpgrade: Bool {
         gameState.player.diamonds >= currentItem.upgradeCost()
     }
     
+    private var canUpgradeNow: Bool {
+        isUnlockedByOrder && currentItem.canUpgrade() && canAffordUpgrade
+    }
+    
     private func upgradeBuilding() {
-        if gameState.spendDiamonds(currentItem.upgradeCost()) {
-            if let index = gameState.player.upgradeItems.firstIndex(where: { $0.id == currentItem.id }) {
-                gameState.player.upgradeItems[index].level += 1
-                gameState.savePlayer()
-            }
-        }
+        _ = gameState.upgradeItem(currentItem)
     }
 }
 

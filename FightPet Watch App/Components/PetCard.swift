@@ -53,34 +53,32 @@ struct PetCard: View {
                     .minimumScaleFactor(0.4)
                     .layoutPriority(1)
                 
-                // 重生按钮（当达到99级时显示）
-                if pet.level >= 99 {
-                    Spacer()
-                    Button(action: {
+                Spacer()
+                Button(action: {
+                    if pet.level >= 99 || gameState.player.isHatching {
                         onRebirth?()
-                    }) {
-                        HStack(spacing: screenWidth * 0.015) {
-                            Image(systemName: "arrow.counterclockwise")
-                                .font(.system(size: expFontSize * 0.9, weight: .semibold))
-                            Text("重生")
-                                .font(.system(size: expFontSize * 0.9, weight: .semibold))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, screenWidth * 0.05)
-                        .padding(.vertical, firstRowHeight * 0.15)
-                        .background(
-                            LinearGradient(
-                                colors: [Color.orange, Color.red],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(cornerRadius)
                     }
-                    .buttonStyle(.plain)
-                } else {
-                    Spacer()
+                }) {
+                    HStack(spacing: screenWidth * 0.015) {
+                        Image(systemName: "arrow.counterclockwise")
+                            .font(.system(size: expFontSize * 0.9, weight: .semibold))
+                        Text(gameState.player.isHatching ? "孵化" : "重生")
+                            .font(.system(size: expFontSize * 0.9, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, screenWidth * 0.05)
+                    .padding(.vertical, firstRowHeight * 0.15)
+                    .background(
+                        LinearGradient(
+                            colors: (pet.level >= 99 || gameState.player.isHatching) ? [Color.orange, Color.red] : [Color.gray, Color.gray.opacity(0.8)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(cornerRadius)
                 }
+                .buttonStyle(.plain)
+                .disabled(!(pet.level >= 99 || gameState.player.isHatching))
             }
             .padding(.horizontal, hPadding)
             .padding(.vertical, vPadding)
