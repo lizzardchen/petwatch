@@ -173,11 +173,16 @@ struct MainView: View {
             if showRanking {
                 RankingView(onClose: { showRanking = false })
                     .environmentObject(gameState)
-                    .transition(.move(edge: .trailing))
+                    .transition(
+                        .asymmetric(
+                            insertion: .opacity.combined(with: .scale(scale: 0.98, anchor: .center)),
+                            removal: .opacity
+                        )
+                    )
                     .zIndex(10)
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: showRanking)
+        .animation(.easeOut(duration: 0.2), value: showRanking)
         .sheet(isPresented: $showStore) {
             StoreView(gameState: gameState)
         }

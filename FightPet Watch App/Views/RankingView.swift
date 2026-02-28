@@ -249,45 +249,44 @@ struct RankingCard: View {
     }
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             Text("\(rank)")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(.black.opacity(rank <= 3 ? 0.9 : 0.75))
-                .frame(width: 24, height: 24)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.black.opacity(rank <= 3 ? 0.9 : 0.78))
+                .frame(width: 21, height: 21)
                 .background(rankColor)
                 .clipShape(Circle())
 
             Text(emoji)
-                .font(.system(size: 20))
+                .font(.system(size: 19))
 
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: 0) {
                 Text(name)
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 7, weight: .semibold))
                     .foregroundColor(.white)
                     .lineLimit(1)
 
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     Text("☆ Lv.\(level)")
-                        .lineLimit(1)
                     Text("· 🏆 \(wins)W")
-                        .lineLimit(1)
                 }
-                .font(.system(size: 8, weight: .medium))
+                .font(.system(size: 4.5, weight: .medium))
                 .foregroundColor(.white.opacity(0.62))
+                .lineLimit(1)
             }
 
-            Spacer(minLength: 4)
+            Spacer(minLength: 2)
 
-            HStack(spacing: 2) {
+            HStack(spacing: 1) {
                 Image(systemName: "bolt")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.system(size: 7, weight: .bold))
                 Text("\(power)")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.system(size: 7, weight: .bold))
             }
             .foregroundColor(Color(red: 1.0, green: 0.58, blue: 0.0))
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 4)
         .frame(maxWidth: .infinity)
         .background(
             Group {
@@ -298,14 +297,14 @@ struct RankingCard: View {
                         endPoint: .trailing
                     )
                 } else {
-                    Color.white.opacity(0.05)
+                    Color.white.opacity(0.04)
                 }
             }
         )
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(Color.white.opacity(isCurrentPlayer ? 0.0 : 0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .stroke(Color.white.opacity(isCurrentPlayer ? 0.0 : 0.05), lineWidth: 1)
         )
     }
 }
