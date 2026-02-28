@@ -169,10 +169,15 @@ struct MainView: View {
                 }
             }
         }
-        .fullScreenCover(isPresented: $showRanking) {
-            RankingView()
-                .environmentObject(gameState)
+        .overlay {
+            if showRanking {
+                RankingView(onClose: { showRanking = false })
+                    .environmentObject(gameState)
+                    .transition(.move(edge: .trailing))
+                    .zIndex(10)
+            }
         }
+        .animation(.easeInOut(duration: 0.2), value: showRanking)
         .sheet(isPresented: $showStore) {
             StoreView(gameState: gameState)
         }

@@ -4,6 +4,7 @@ import SwiftUI
 struct RankingView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var gameState: GameStateManager
+    var onClose: (() -> Void)? = nil
     @State private var showOpponentSelection = false
     @State private var firebaseRankings: [RankingPlayer] = []
     @State private var challengeOpponents: [Opponent] = []
@@ -37,8 +38,6 @@ struct RankingView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            rankingHeader
-
             if isLoading && firebaseRankings.isEmpty {
                 Spacer(minLength: 8)
                 ProgressView()
@@ -77,6 +76,22 @@ struct RankingView: View {
 
             battleSection
         }
+        .overlay(alignment: .top) {
+            rankingHeader
+                .padding(.top, 0)
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.03, green: 0.08, blue: 0.19),
+                            Color(red: 0.05, green: 0.1, blue: 0.2)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .ignoresSafeArea(edges: .top)
+                .zIndex(2)
+        }
         .background(
             LinearGradient(
                 colors: [
@@ -100,18 +115,26 @@ struct RankingView: View {
     }
 
     private var rankingHeader: some View {
-        HStack(spacing: 6) {
-            Button(action: { dismiss() }) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.white.opacity(0.92))
-                    .frame(width: 24, height: 24)
-                    .background(Color.white.opacity(0.1))
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
+        ZStack {
+            HStack {
+                Button(action: {
+                    if let onClose {
+                        onClose()
+                    } else {
+                        dismiss()
+                    }
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .frame(width: 24, height: 24)
+                        .background(Color.white.opacity(0.1))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
 
-            Spacer(minLength: 0)
+                Spacer(minLength: 0)
+            }
 
             HStack(spacing: 4) {
                 Image(systemName: "trophy")
@@ -121,24 +144,10 @@ struct RankingView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.white.opacity(0.95))
             }
-
-            Spacer(minLength: 0)
-
-            Button(action: loadRankings) {
-                Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.white.opacity(0.85))
-                    .rotationEffect(.degrees(isLoading ? 360 : 0))
-                    .animation(isLoading ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: isLoading)
-                    .frame(width: 24, height: 24)
-                    .background(Color.white.opacity(0.1))
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
         }
         .padding(.horizontal, 8)
-        .padding(.top, 0)
-        .padding(.bottom, 0)
+        .padding(.top, 8)
+        .padding(.bottom, 2)
     }
 
     private var battleSection: some View {
