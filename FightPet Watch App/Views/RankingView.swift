@@ -108,9 +108,21 @@ struct RankingView: View {
             loadRankings()
             gameState.syncToFirebase()
         }
-        .sheet(isPresented: $showOpponentSelection) {
-            OpponentSelectionView(opponents: challengeOpponents)
+        .overlay {
+            if showOpponentSelection {
+                OpponentSelectionView(
+                    opponents: challengeOpponents,
+                    onClose: { showOpponentSelection = false }
+                )
                 .environmentObject(gameState)
+                .transition(
+                    .asymmetric(
+                        insertion: .opacity.combined(with: .scale(scale: 0.98, anchor: .center)),
+                        removal: .opacity
+                    )
+                )
+                .zIndex(20)
+            }
         }
     }
 
@@ -125,9 +137,9 @@ struct RankingView: View {
                     }
                 }) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 12, weight: .bold))
+                        .font(.system(size: 11, weight: .bold))
                         .foregroundColor(.white.opacity(0.92))
-                        .frame(width: 24, height: 24)
+                        .frame(width: 22, height: 22)
                         .background(Color.white.opacity(0.1))
                         .clipShape(Circle())
                 }
@@ -138,16 +150,17 @@ struct RankingView: View {
 
             HStack(spacing: 4) {
                 Image(systemName: "trophy")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.yellow)
                 Text("Rank")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.white.opacity(0.95))
             }
+            .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(.horizontal, 8)
-        .padding(.top, 8)
-        .padding(.bottom, 2)
+        .padding(.top, 5)
+        .padding(.bottom, 1)
     }
 
     private var battleSection: some View {
@@ -320,15 +333,43 @@ struct RankingCard: View {
 
 /// 对手选择界面
 struct OpponentSelectionView: View {
-    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var gameState: GameStateManager
     let opponents: [Opponent]
+    var onClose: (() -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 0) {
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 4) {
+                    if opponents.isEmpty {
+                        Text("暂无可挑战玩家")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.white.opacity(0.5))
+                            .padding(.top, 16)
+                    } else {
+                        ForEach(opponents) { opponent in
+                            OpponentCard(opponent: opponent, gameState: gameState)
+                        }
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.top, 30)
+                .padding(.bottom, 6)
+            }
+
+            Text("Battle to earn rewards!")
+                .font(.system(size: 8, weight: .medium))
+                .foregroundColor(.white.opacity(0.55))
+                .padding(.bottom, 5)
+        }
+        .overlay(alignment: .top) {
             ZStack {
                 HStack {
-                    Button(action: { dismiss() }) {
+                    Button(action: {
+                        if let onClose {
+                            onClose()
+                        }
+                    }) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundColor(.white.opacity(0.92))
@@ -344,33 +385,22 @@ struct OpponentSelectionView: View {
                 Text("Battle")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.white.opacity(0.95))
+                    .offset(y: 2)
             }
             .padding(.horizontal, 8)
-            .padding(.top, 8)
+            .padding(.top, 0)
             .padding(.bottom, 4)
-
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 4) {
-                    if opponents.isEmpty {
-                        Text("暂无可挑战玩家")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.white.opacity(0.5))
-                            .padding(.top, 16)
-                    } else {
-                        ForEach(opponents) { opponent in
-                            OpponentCard(opponent: opponent, gameState: gameState)
-                        }
-                    }
-                }
-                .padding(.horizontal, 8)
-                .padding(.top, 2)
-                .padding(.bottom, 6)
-            }
-
-            Text("Battle to earn rewards!")
-                .font(.system(size: 8, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
-                .padding(.bottom, 5)
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.03, green: 0.08, blue: 0.19),
+                        Color(red: 0.05, green: 0.10, blue: 0.20)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .ignoresSafeArea(edges: .top)
         }
         .background(
             LinearGradient(

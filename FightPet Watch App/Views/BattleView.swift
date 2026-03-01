@@ -69,6 +69,7 @@ struct BattleView: View {
     private var preparingView: some View {
         VStack(spacing: 12) {
             Text("⚔️ 战斗准备")
+                .padding(.top, 20)
                 .font(.system(size: Constants.FontSize.medium, weight: .bold))
                 .foregroundColor(.yellow)
             
