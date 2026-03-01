@@ -345,22 +345,24 @@ struct OpponentSelectionView: View {
                         Text("暂无可挑战玩家")
                             .font(.system(size: 10, weight: .medium))
                             .foregroundColor(.white.opacity(0.5))
-                            .padding(.top, 16)
+                            .padding(.top, 8)
                     } else {
                         ForEach(opponents) { opponent in
                             OpponentCard(opponent: opponent, gameState: gameState)
                         }
                     }
+
+                    Text("Battle to earn rewards!")
+                        .font(.system(size: 8, weight: .medium))
+                        .foregroundColor(.white.opacity(0.55))
+                        .padding(.top, 6)
+                        .padding(.bottom, 4)
                 }
                 .padding(.horizontal, 8)
-                .padding(.top, 30)
-                .padding(.bottom, 6)
+                .padding(.top, 2)
+                .padding(.bottom, 4)
+                .frame(maxWidth: .infinity, alignment: .top)
             }
-
-            Text("Battle to earn rewards!")
-                .font(.system(size: 8, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
-                .padding(.bottom, 5)
         }
         .overlay(alignment: .top) {
             ZStack {
