@@ -165,7 +165,7 @@ struct RankingView: View {
             }
 
             Button(action: {
-                if gameState.canBattle() && gameState.hasRemainingChallenges() {
+                if buttonEnabled {
                     loadChallengeOpponentsAndPresent()
                 }
             }) {
@@ -204,13 +204,22 @@ struct RankingView: View {
     }
 
     private var buttonEnabled: Bool {
-        gameState.canBattle() && gameState.hasRemainingChallenges()
+        gameState.hasRemainingChallenges() && (gameState.canBattle() || allowBattleTestBypass)
     }
 
     private var buttonTitle: String {
         if !gameState.hasRemainingChallenges() { return "次数已用完" }
+        if !gameState.canBattle() && allowBattleTestBypass { return "测试战斗" }
         if !gameState.canBattle() { return "快乐值不足" }
         return "Battle"
+    }
+
+    private var allowBattleTestBypass: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
     }
 
     private func loadRankings() {
@@ -251,7 +260,7 @@ struct RankingCard: View {
     var body: some View {
         HStack(spacing: 6) {
             Text("\(rank)")
-                .font(.system(size: 10, weight: .medium))
+                .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.black.opacity(rank <= 3 ? 0.9 : 0.78))
                 .frame(width: 21, height: 21)
                 .background(rankColor)
@@ -262,7 +271,7 @@ struct RankingCard: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 Text(name)
-                    .font(.system(size: 7, weight: .semibold))
+                    .font(.system(size: 8, weight: .semibold))
                     .foregroundColor(.white)
                     .lineLimit(1)
 
@@ -270,7 +279,7 @@ struct RankingCard: View {
                     Text("☆ Lv.\(level)")
                     Text("· 🏆 \(wins)W")
                 }
-                .font(.system(size: 4.5, weight: .medium))
+                .font(.system(size: 5.5, weight: .medium))
                 .foregroundColor(.white.opacity(0.62))
                 .lineLimit(1)
             }
@@ -279,9 +288,9 @@ struct RankingCard: View {
 
             HStack(spacing: 1) {
                 Image(systemName: "bolt")
-                    .font(.system(size: 7, weight: .bold))
+                    .font(.system(size: 8, weight: .bold))
                 Text("\(power)")
-                    .font(.system(size: 7, weight: .bold))
+                    .font(.system(size: 8, weight: .bold))
             }
             .foregroundColor(Color(red: 1.0, green: 0.58, blue: 0.0))
         }
@@ -317,52 +326,64 @@ struct OpponentSelectionView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // 标题栏
-            HStack {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.white)
+            ZStack {
+                HStack {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white.opacity(0.92))
+                            .frame(width: 24, height: 24)
+                            .background(Color.white.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+
+                    Spacer(minLength: 0)
                 }
 
-                Spacer()
-
-                Text("选择对手")
-                    .font(.system(size: Constants.FontSize.large, weight: .bold))
-                    .foregroundColor(.white)
-
-                Spacer()
-
-                Color.clear
-                    .frame(width: 30)
+                Text("Battle")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.95))
             }
-            .padding()
+            .padding(.horizontal, 8)
+            .padding(.top, 8)
+            .padding(.bottom, 4)
 
-            ScrollView {
-                VStack(spacing: 12) {
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 4) {
                     if opponents.isEmpty {
                         Text("暂无可挑战玩家")
-                            .font(.system(size: Constants.FontSize.small))
+                            .font(.system(size: 10, weight: .medium))
                             .foregroundColor(.white.opacity(0.5))
-                            .padding()
+                            .padding(.top, 16)
                     } else {
                         ForEach(opponents) { opponent in
                             OpponentCard(opponent: opponent, gameState: gameState)
                         }
                     }
                 }
-                .padding(.horizontal)
-
-                // 提示文字
-                VStack(spacing: 4) {
-                    Text("胜利获得更多钻石")
-                        .font(.system(size: Constants.FontSize.small))
-                        .foregroundColor(.white.opacity(0.8))
-                }
-                .padding(.vertical, 12)
+                .padding(.horizontal, 8)
+                .padding(.top, 2)
+                .padding(.bottom, 6)
             }
+
+            Text("Battle to earn rewards!")
+                .font(.system(size: 8, weight: .medium))
+                .foregroundColor(.white.opacity(0.55))
+                .padding(.bottom, 5)
         }
-        .background(Constants.Colors.darkBackground)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(red: 0.03, green: 0.08, blue: 0.19),
+                    Color(red: 0.06, green: 0.12, blue: 0.22),
+                    Color(red: 0.09, green: 0.15, blue: 0.26)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+        )
     }
 }
 
@@ -376,36 +397,39 @@ struct OpponentCard: View {
         Button(action: {
             showBattle = true
         }) {
-            HStack(spacing: 10) {
-                // 头像
+            HStack(spacing: 8) {
                 Text(opponent.emoji)
-                    .font(.system(size: 32))
+                    .font(.system(size: 23))
 
-                // 信息
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 1) {
                     Text(opponent.name)
-                        .font(.system(size: Constants.FontSize.small, weight: .semibold))
+                        .font(.system(size: 6, weight: .medium))
                         .foregroundColor(.white)
 
-                    HStack(spacing: 8) {
-                        Text("⚡ \(opponent.power)")
-                            .foregroundColor(.orange)
-                        Text("胜率: \(Int(opponent.winRate * 100))%")
-                            .foregroundColor(.white.opacity(0.6))
+                    HStack(spacing: 6) {
+                        HStack(spacing: 2) {
+                            Image(systemName: "bolt")
+                            Text("\(opponent.power)")
+                        }
+                        .foregroundColor(Color(red: 1.0, green: 0.58, blue: 0.0))
+
+                        Text("Win: \(Int(opponent.winRate * 100))%")
+                            .foregroundColor(.white.opacity(0.62))
                     }
-                    .font(.system(size: 10))
+                    .font(.system(size: 4.5, weight: .medium))
                 }
 
-                Spacer()
-
-                Text("💎\(opponent.diamondReward)")
-                    .font(.system(size: Constants.FontSize.small, weight: .bold))
-                    .foregroundColor(.cyan)
+                Spacer(minLength: 0)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .background(Constants.Colors.darkGray.opacity(0.6))
-            .cornerRadius(10)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(red: 0.15, green: 0.21, blue: 0.30).opacity(0.88))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(Color.white.opacity(0.05), lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
         .fullScreenCover(isPresented: $showBattle) {
