@@ -336,6 +336,7 @@ struct OpponentSelectionView: View {
     @EnvironmentObject var gameState: GameStateManager
     let opponents: [Opponent]
     var onClose: (() -> Void)? = nil
+    @State private var selectedOpponent: Opponent? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -348,7 +349,9 @@ struct OpponentSelectionView: View {
                             .padding(.top, 8)
                     } else {
                         ForEach(opponents) { opponent in
-                            OpponentCard(opponent: opponent, gameState: gameState)
+                            OpponentCard(opponent: opponent) {
+                                selectedOpponent = opponent
+                            }
                         }
                     }
 
@@ -416,19 +419,32 @@ struct OpponentSelectionView: View {
             )
             .ignoresSafeArea()
         )
+        .overlay {
+            if let selectedOpponent {
+                BattleView(
+                    opponent: selectedOpponent,
+                    gameState: gameState,
+                    onClose: { self.selectedOpponent = nil }
+                )
+                .transition(
+                    .asymmetric(
+                        insertion: .opacity.combined(with: .scale(scale: 0.98, anchor: .center)),
+                        removal: .opacity
+                    )
+                )
+                .zIndex(30)
+            }
+        }
     }
 }
 
 /// 对手卡片
 struct OpponentCard: View {
     let opponent: Opponent
-    @ObservedObject var gameState: GameStateManager
-    @State private var showBattle = false
+    let onSelect: () -> Void
 
     var body: some View {
-        Button(action: {
-            showBattle = true
-        }) {
+        Button(action: onSelect) {
             HStack(spacing: 8) {
                 Text(opponent.emoji)
                     .font(.system(size: 23))
@@ -464,9 +480,6 @@ struct OpponentCard: View {
             )
         }
         .buttonStyle(.plain)
-        .fullScreenCover(isPresented: $showBattle) {
-            BattleView(opponent: opponent, gameState: gameState)
-        }
     }
 }
 

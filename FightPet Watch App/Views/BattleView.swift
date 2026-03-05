@@ -4,7 +4,9 @@ import SwiftUI
 struct BattleView: View {
     let opponent: Opponent
     @ObservedObject var gameState: GameStateManager
+    var onClose: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
+    private let preparingHeaderMinHeight: CGFloat = 34
     
     // 战斗状态
     @State private var battlePhase: BattlePhase = .preparing
@@ -37,101 +39,191 @@ struct BattleView: View {
     }
     
     var body: some View {
-        ZStack {
-            Constants.Colors.darkBackground
-                .ignoresSafeArea()
-            
-            switch battlePhase {
-            case .preparing:
-                preparingView
-            case .fighting:
-                fightingView
-            case .result:
-                resultView
+        GeometryReader { rootGeo in
+            let headerHeight = max(rootGeo.safeAreaInsets.top, preparingHeaderMinHeight)
+
+            ZStack {
+                Constants.Colors.darkBackground
+                    .ignoresSafeArea()
+                
+                switch battlePhase {
+                case .preparing:
+                    preparingView(headerHeight: headerHeight)
+                case .fighting:
+                    fightingView
+                case .result:
+                    resultView
+                }
+                
+                // 全局震动效果
+                Color.clear
+                    .offset(x: shakeOffset)
             }
-            
-            // 全局震动效果
-            Color.clear
-                .offset(x: shakeOffset)
-        }
-        .onAppear {
-            playerMaxHP = gameState.player.currentPet.hp
-            opponentMaxHP = opponent.hp
-            playerHP = playerMaxHP
-            opponentHP = opponentMaxHP
-        }
-        .onDisappear {
-            roundTimer?.invalidate()
+            .overlay(alignment: .top) {
+                if battlePhase == .preparing {
+                    preparingHeader(headerHeight: headerHeight)
+                }
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if battlePhase == .preparing {
+                    preparingBottomBar
+                }
+            }
+            .navigationBarBackButtonHidden(true)
+            .onAppear {
+                playerMaxHP = gameState.player.currentPet.hp
+                opponentMaxHP = opponent.hp
+                playerHP = playerMaxHP
+                opponentHP = opponentMaxHP
+            }
+            .onDisappear {
+                roundTimer?.invalidate()
+            }
         }
     }
     
     // MARK: - 准备阶段
-    private var preparingView: some View {
-        VStack(spacing: 12) {
-            Text("⚔️ 战斗准备")
-                .padding(.top, 20)
-                .font(.system(size: Constants.FontSize.medium, weight: .bold))
-                .foregroundColor(.yellow)
-            
-            // VS 展示
-            HStack(spacing: 12) {
-                // 玩家
-                VStack(spacing: 4) {
-                    Text(gameState.player.currentPet.emoji)
-                        .font(.system(size: 32))
-                    Text(gameState.player.currentPet.name)
-                        .font(.system(size: 10, weight: .semibold))
-                        .lineLimit(1)
+    private func preparingView(headerHeight: CGFloat) -> some View {
+        GeometryReader { geo in
+            let availableHeight = max(1, geo.size.height - headerHeight)
+            let availableWidth = geo.size.width
+            let avatarSize = min(48, max(30, availableHeight * 0.23))
+            let nameFontSize = min(12, max(8, availableHeight * 0.065))
+            let versusFontSize = min(30, max(16, availableHeight * 0.15))
+            let valueFontSize = min(18, max(11, availableHeight * 0.095))
+            let labelFontSize = min(12, max(8, availableHeight * 0.06))
+            let statRowSpacing = min(6, max(1, availableHeight * 0.018))
+            let valueWidth = min(56, max(40, availableWidth * 0.18))
+            let avatarBlockEstimate = avatarSize + nameFontSize + 12
+            let statsBlockEstimate = (valueFontSize * 3) + (statRowSpacing * 2) + 10
+            let freeHeight = max(0, availableHeight - avatarBlockEstimate - statsBlockEstimate)
+            let topPadding = min(10, freeHeight * 0.25)
+            let sectionSpacing = max(4, min(16, freeHeight * 0.45))
+
+            VStack(spacing: 0) {
+                // VS 展示
+                HStack(spacing: 12) {
+                    // 玩家
+                    VStack(spacing: 4) {
+                        Text(gameState.player.currentPet.emoji)
+                            .font(.system(size: avatarSize))
+                        Text(gameState.player.currentPet.name)
+                            .font(.system(size: nameFontSize, weight: .semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    Text("VS")
+                        .font(.system(size: versusFontSize, weight: .black))
+                        .foregroundColor(.red)
+
+                    // 对手
+                    VStack(spacing: 4) {
+                        Text(opponent.emoji)
+                            .font(.system(size: avatarSize))
+                        Text(opponent.name)
+                            .font(.system(size: nameFontSize, weight: .semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                    }
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity)
-                
-                Text("VS")
-                    .font(.system(size: 16, weight: .black))
-                    .foregroundColor(.red)
-                
-                // 对手
-                VStack(spacing: 4) {
-                    Text(opponent.emoji)
-                        .font(.system(size: 32))
-                    Text(opponent.name)
-                        .font(.system(size: 10, weight: .semibold))
-                        .lineLimit(1)
+                .padding(.horizontal)
+                .padding(.top, topPadding)
+
+                Spacer(minLength: sectionSpacing)
+
+                // 属性对比
+                VStack(spacing: statRowSpacing) {
+                    statCompareRow(
+                        label: "HP",
+                        playerVal: "\(gameState.player.currentPet.hp)",
+                        opponentVal: "\(opponent.hp)",
+                        valueFontSize: valueFontSize,
+                        labelFontSize: labelFontSize,
+                        valueWidth: valueWidth,
+                        horizontalPadding: 10
+                    )
+                    statCompareRow(
+                        label: "ATK",
+                        playerVal: "\(gameState.player.currentPet.attack)",
+                        opponentVal: "\(opponent.attack)",
+                        valueFontSize: valueFontSize,
+                        labelFontSize: labelFontSize,
+                        valueWidth: valueWidth,
+                        horizontalPadding: 10
+                    )
+                    statCompareRow(
+                        label: "PWR",
+                        playerVal: "\(gameState.player.currentPet.power)",
+                        opponentVal: "\(opponent.power)",
+                        valueFontSize: valueFontSize,
+                        labelFontSize: labelFontSize,
+                        valueWidth: valueWidth,
+                        horizontalPadding: 10
+                    )
                 }
-                .frame(maxWidth: .infinity)
+                .padding(.horizontal)
+
+                Spacer(minLength: 0)
             }
-            .padding(.horizontal)
-            
-            // 属性对比
-            VStack(spacing: 4) {
-                statCompareRow(label: "HP", playerVal: "\(gameState.player.currentPet.hp)", opponentVal: "\(opponent.hp)")
-                statCompareRow(label: "ATK", playerVal: "\(gameState.player.currentPet.attack)", opponentVal: "\(opponent.attack)")
-                statCompareRow(label: "PWR", playerVal: "\(gameState.player.currentPet.power)", opponentVal: "\(opponent.power)")
-            }
-            .padding(.horizontal)
-            
-            Spacer()
-            
-            // 开战按钮
+            .frame(maxWidth: .infinity, maxHeight: availableHeight, alignment: .top)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+    }
+
+    private var preparingBottomBar: some View {
+        let buttonHeight: CGFloat = 34
+        return VStack(spacing: 0) {
             Button(action: startBattle) {
                 Text("⚔️ 开始战斗")
                     .font(.system(size: Constants.FontSize.medium, weight: .bold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 36)
+                    .frame(height: buttonHeight)
                     .background(Color.red)
-                    .cornerRadius(18)
+                    .cornerRadius(buttonHeight / 2)
             }
             .buttonStyle(.plain)
-            .padding(.horizontal)
-            
-            Button(action: { dismiss() }) {
-                Text("撤退")
-                    .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.6))
-            }
-            .buttonStyle(.plain)
-            .padding(.bottom, 4)
+            .padding(.horizontal, 10)
+            .padding(.top, 2)
+            .padding(.bottom, 6)
         }
+    }
+
+    private func preparingHeader(headerHeight: CGFloat) -> some View {
+        return ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.03, green: 0.08, blue: 0.19),
+                    Color(red: 0.05, green: 0.10, blue: 0.20)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            HStack {
+                Button(action: closeBattle) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .frame(width: 24, height: 24)
+                        .background(Color.white.opacity(0.1))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+
+                Spacer(minLength: 0)
+            }
+
+            Text("战斗准备")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.white.opacity(0.95))
+        }
+        .frame(height: headerHeight)
+        .padding(.horizontal, 8)
+        .ignoresSafeArea(edges: .top)
     }
     
     // MARK: - 战斗阶段
@@ -341,7 +433,7 @@ struct BattleView: View {
             }
             
             // 返回按钮
-            Button(action: { dismiss() }) {
+            Button(action: closeBattle) {
                 Text("返回")
                     .font(.system(size: Constants.FontSize.large, weight: .bold))
                     .foregroundColor(.white)
@@ -362,27 +454,35 @@ struct BattleView: View {
     
     // MARK: - Helper Views
     
-    private func statCompareRow(label: String, playerVal: String, opponentVal: String) -> some View {
+    private func statCompareRow(
+        label: String,
+        playerVal: String,
+        opponentVal: String,
+        valueFontSize: CGFloat = Constants.FontSize.small,
+        labelFontSize: CGFloat = Constants.FontSize.small,
+        valueWidth: CGFloat = 50,
+        horizontalPadding: CGFloat = 20
+    ) -> some View {
         HStack {
             Text(playerVal)
-                .font(.system(size: Constants.FontSize.small, weight: .bold))
+                .font(.system(size: valueFontSize, weight: .bold))
                 .foregroundColor(.cyan)
-                .frame(width: 50, alignment: .trailing)
+                .frame(width: valueWidth, alignment: .trailing)
             
             Spacer()
             
             Text(label)
-                .font(.system(size: Constants.FontSize.small))
+                .font(.system(size: labelFontSize))
                 .foregroundColor(.white.opacity(0.6))
             
             Spacer()
             
             Text(opponentVal)
-                .font(.system(size: Constants.FontSize.small, weight: .bold))
+                .font(.system(size: valueFontSize, weight: .bold))
                 .foregroundColor(.red)
-                .frame(width: 50, alignment: .leading)
+                .frame(width: valueWidth, alignment: .leading)
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, horizontalPadding)
     }
     
     private func battleLogRow(round: BattleRound) -> some View {
@@ -445,7 +545,14 @@ struct BattleView: View {
     }
     
     // MARK: - Actions
-    
+    private func closeBattle() {
+        if let onClose {
+            onClose()
+        } else {
+            dismiss()
+        }
+    }
+
     private func startBattle() {
         let result = gameState.executeBattle(against: opponent)
         self.rounds = result.rounds
