@@ -185,10 +185,10 @@ struct BattleView: View {
                     .background(Color.red)
                     .cornerRadius(buttonHeight / 2)
             }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 10)
-            .padding(.top, 2)
-            .padding(.bottom, 6)
+        .buttonStyle(.plain)
+        .padding(.horizontal, 10)
+        .padding(.top, 8)
+        .padding(.bottom, 6)
         }
     }
 
@@ -228,92 +228,109 @@ struct BattleView: View {
     
     // MARK: - 战斗阶段
     private var fightingView: some View {
-        VStack(spacing: 10) {
-            // 战斗场景
-            VStack(spacing: 15) {
-                // 对手侧 (上方)
-                VStack(spacing: 4) {
-                    HStack {
-                        Text(opponent.name)
-                            .font(.system(size: 10))
-                        Spacer()
-                        Text("\(opponentHP) HP")
-                            .font(.system(size: 10, design: .monospaced))
-                    }
-                    .padding(.horizontal, 20)
-                    
-                    ZStack(alignment: .leading) {
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.3))
-                        Rectangle()
-                            .fill(Color.red)
-                            .frame(width: 140 * hpRatio(current: opponentHP, max: opponentMaxHP))
-                    }
-                    .frame(width: 140, height: 6)
-                    .cornerRadius(3)
-                    
-                    Text(opponent.emoji)
-                        .font(.system(size: 44))
-                        .offset(y: opponentOffset)
-                        .opacity(opponentFlash ? 0.3 : 1.0)
-                }
+        GeometryReader { geo in
+            let barPadding: CGFloat = 20
+            let barWidth = geo.size.width - barPadding * 2
+            
+            ZStack {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.40, green: 0.03, blue: 0.03),
+                                Color(red: 0.12, green: 0.01, blue: 0.03)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .padding(2)
                 
-                // 中间交叉剑图标
-                Image(systemName: "swords")
-                    .font(.system(size: 20))
-                    .foregroundColor(.white.opacity(0.5))
-                
-                // 玩家侧 (下方)
-                VStack(spacing: 4) {
-                    Text(gameState.player.currentPet.emoji)
-                        .font(.system(size: 44))
-                        .offset(y: playerOffset)
-                        .opacity(playerFlash ? 0.3 : 1.0)
-                    
-                    ZStack(alignment: .leading) {
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.3))
-                        Rectangle()
-                            .fill(Color.green)
-                            .frame(width: 140 * hpRatio(current: playerHP, max: playerMaxHP))
-                    }
-                    .frame(width: 140, height: 6)
-                    .cornerRadius(3)
-                    
-                    HStack {
-                        Text("你")
-                            .font(.system(size: 10))
-                        Spacer()
+                VStack(spacing: 0) {
+                    // 玩家侧 (上方)
+                    VStack(spacing: 3) {
+                        Text(gameState.player.currentPet.emoji)
+                            .font(.system(size: 40))
+                            .offset(y: playerOffset)
+                            .opacity(playerFlash ? 0.3 : 1.0)
+                        
+                        Text("You")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.white)
+                        
+                        ZStack(alignment: .leading) {
+                            Rectangle().fill(Color.white.opacity(0.2))
+                            Rectangle().fill(Color.green)
+                                .frame(width: max(0, barWidth * hpRatio(current: playerHP, max: playerMaxHP)))
+                        }
+                        .frame(height: 7)
+                        .cornerRadius(3.5)
+                        .padding(.horizontal, barPadding)
+                        
                         Text("\(playerHP) HP")
                             .font(.system(size: 10, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.7))
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.top, geo.safeAreaInsets.top * 0.5)
+                    
+                    Spacer()
+                    
+                    VStack(spacing: 6) {
+                        Image(systemName: "swords")
+                            .font(.system(size: 22))
+                            .foregroundColor(.white.opacity(0.35))
+                        
+                        if showDamageText {
+                            Text(damageText)
+                                .font(.system(size: 16, weight: .black))
+                                .foregroundColor(damageText.contains("💥") ? .orange : .white)
+                                .transition(.asymmetric(
+                                    insertion: .scale.combined(with: .opacity).combined(with: .move(edge: .bottom)),
+                                    removal: .opacity
+                                ))
+                                .zIndex(1)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // 对手侧 (下方)
+                    VStack(spacing: 3) {
+                        Text(opponent.emoji)
+                            .font(.system(size: 40))
+                            .offset(y: opponentOffset)
+                            .opacity(opponentFlash ? 0.3 : 1.0)
+                        
+                        Text(opponent.name)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.white)
+                        
+                        Text("\(opponentHP) HP")
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.7))
+                        
+                        ZStack(alignment: .leading) {
+                            Rectangle().fill(Color.white.opacity(0.2))
+                            Rectangle().fill(Color.red)
+                                .frame(width: max(0, barWidth * hpRatio(current: opponentHP, max: opponentMaxHP)))
+                        }
+                        .frame(height: 7)
+                        .cornerRadius(3.5)
+                        .padding(.horizontal, barPadding)
+                    }
+                    
+                    Button(action: skipToResult) {
+                        Text("跳过")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.4))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 4)
+                    .padding(.bottom, 6)
                 }
             }
-            
-            // 伤害飘字
-            if showDamageText {
-                Text(damageText)
-                    .font(.system(size: 18, weight: .black))
-                    .foregroundColor(damageText.contains("暴击") ? .orange : .white)
-                    .transition(.asymmetric(
-                        insertion: .scale.combined(with: .opacity).combined(with: .move(edge: .bottom)),
-                        removal: .opacity
-                    ))
-                    .zIndex(1)
-            }
-            
-            Spacer()
-            
-            Button(action: skipToResult) {
-                Text("跳过")
-                    .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.4))
-            }
-            .buttonStyle(.plain)
-            .padding(.bottom, 4)
         }
-        .padding(.top, 10)
+        .ignoresSafeArea(edges: .top)
     }
     
     // MARK: - 结果阶段
@@ -581,12 +598,12 @@ struct BattleView: View {
         let round = rounds[currentRoundIndex]
         let isPlayerAttacking = round.isPlayerAttack
         
-        // 1. 攻击位移动画
+        // 1. 攻击位移动画（玩家在上方向下攻击，对手在下方向上攻击）
         withAnimation(.easeIn(duration: 0.2)) {
             if isPlayerAttacking {
-                playerOffset = -20
+                playerOffset = 20
             } else {
-                opponentOffset = 20
+                opponentOffset = -20
             }
         }
         
