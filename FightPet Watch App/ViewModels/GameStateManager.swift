@@ -617,7 +617,7 @@ class GameStateManager: ObservableObject {
     /// 开始重生孵化流程（Lv.99 可执行）
     /// - Returns: 重生获得的钻石奖励数量，nil 表示失败
     func startRebirthHatching() -> Int? {
-        // guard player.currentPet.canRebirth() else { return nil }  // 测试：移除等级限制
+        guard player.currentPet.canRebirth() else { return nil }
         guard !player.isHatching else { return nil }
         
         let sourcePet = player.currentPet

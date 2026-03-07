@@ -6,7 +6,7 @@ struct MainView: View {
     @State private var showRanking = false
     @State private var showActivity = false
     @State private var showStore = false
-    @State private var showRebirth = true  // 测试：进入主界面默认打开重生页
+    @State private var showRebirth = false
     @State private var showDebugInfo = false  // 临时调试开关
     
     var body: some View {

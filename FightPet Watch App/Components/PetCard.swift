@@ -9,8 +9,7 @@ struct PetCard: View {
     let allocatedHeight: CGFloat  // 新增：分配给PetCard的高度
     
     var body: some View {
-        let isRebirthTestingEnabled = true
-        let canOpenRebirth = isRebirthTestingEnabled || pet.level >= 99 || gameState.player.isHatching
+        let canOpenRebirth = pet.canRebirth() || gameState.player.isHatching
         
         // 基于 allocatedHeight 计算所有尺寸
         let vMargin = allocatedHeight * LayoutConstants.FixedSectionLayout.PetCard.verticalMarginRatio

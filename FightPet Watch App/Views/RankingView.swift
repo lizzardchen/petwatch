@@ -217,22 +217,13 @@ struct RankingView: View {
     }
 
     private var buttonEnabled: Bool {
-        gameState.hasRemainingChallenges() && (gameState.canBattle() || allowBattleTestBypass)
+        gameState.hasRemainingChallenges() && gameState.canBattle()
     }
 
     private var buttonTitle: String {
         if !gameState.hasRemainingChallenges() { return "次数已用完" }
-        if !gameState.canBattle() && allowBattleTestBypass { return "测试战斗" }
         if !gameState.canBattle() { return "快乐值不足" }
         return "Battle"
-    }
-
-    private var allowBattleTestBypass: Bool {
-        #if DEBUG
-        return true
-        #else
-        return false
-        #endif
     }
 
     private func loadRankings() {

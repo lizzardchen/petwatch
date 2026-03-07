@@ -202,13 +202,13 @@ struct RebirthView: View {
                     )
                     .cornerRadius(Constants.CornerRadius.large)
                 }
-                // .disabled(!pet.canRebirth())  // 测试：始终允许重生
+                .disabled(!pet.canRebirth())
                 
-                // if !pet.canRebirth() {
-                //     Text("需达到 Lv.99 才可重生")
-                //         .font(.system(size: Constants.FontSize.small))
-                //         .foregroundColor(.orange)
-                // }
+                if !pet.canRebirth() {
+                    Text("需达到 Lv.99 才可重生")
+                        .font(.system(size: Constants.FontSize.small))
+                        .foregroundColor(.orange)
+                }
                 
                 Button(action: closeView) {
                     Text("取消")
