@@ -16,6 +16,8 @@ struct RebirthView: View {
     @State private var newStrength: Int = 0
     @State private var currentTime = Date()
     @State private var eggOffset: CGFloat = 0
+    @State private var showHatchAnimation = false
+    @State private var hatchAnimPhase: Int = 0
     
     private var pet: Pet {
         gameState.player.currentPet
@@ -30,7 +32,9 @@ struct RebirthView: View {
             Constants.Colors.darkBackground
                 .ignoresSafeArea()
             
-            if showResult {
+            if showHatchAnimation {
+                eggHatchAnimationView
+            } else if showResult {
                 rebirthResultView
             } else if isHatching {
                 hatchingView
@@ -430,106 +434,118 @@ struct RebirthView: View {
     
     // MARK: - 重生结果界面
     private var rebirthResultView: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                VStack(spacing: 16) {
-                    Spacer().frame(height: 20)
-                    
-                    Text("✨ 孵化完成！✨")
-                        .font(.system(size: Constants.FontSize.title, weight: .bold))
-                        .foregroundColor(.yellow)
-                    
+        GeometryReader { geo in
+            let w = geo.size.width
+            let safeTop = geo.safeAreaInsets.top
+            let safeBot = geo.safeAreaInsets.bottom
+            let pad: CGFloat = max(6, w * 0.04)
+
+            VStack(spacing: 0) {
+                // 标题
+                Text("✨ 孵化完成！✨")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.yellow)
+
+                Spacer(minLength: 2)
+
+                // 宠物头像 + 名字 + 品质
+                VStack(spacing: 2) {
                     Text(pet.emoji)
-                        .font(.system(size: 60))
-                    
-                    Text(pet.name)
-                        .font(.system(size: Constants.FontSize.large, weight: .semibold))
-                        .foregroundColor(.white)
-                    
+                        .font(.system(size: 28))
+                    HStack(spacing: 4) {
+                        Text(pet.name)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.white)
+                        Text(newQuality.name)
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1)
+                            .background(newQuality.color)
+                            .cornerRadius(4)
+                    }
+
+                    // 品质提升显示
                     if oldQuality != newQuality {
-                        HStack(spacing: 8) {
+                        HStack(spacing: 4) {
                             Text(oldQuality.name)
-                                .font(.system(size: Constants.FontSize.medium, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(oldQuality.color)
-                                .cornerRadius(8)
-                            
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(oldQuality.color)
                             Text("→")
-                                .font(.system(size: Constants.FontSize.large))
-                                .foregroundColor(.yellow)
-                            
+                                .font(.system(size: 9))
+                                .foregroundColor(.white.opacity(0.5))
                             Text(newQuality.name)
-                                .font(.system(size: Constants.FontSize.medium, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(newQuality.color)
-                                .cornerRadius(8)
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(newQuality.color)
                         }
+                        .padding(.top, 1)
                     }
-                    
-                    VStack(spacing: 8) {
-                        Text("新属性")
-                            .font(.system(size: Constants.FontSize.medium, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.8))
-                        
-                        HStack(spacing: 20) {
-                            VStack(spacing: 4) {
-                                Text("🧠")
-                                Text("\(newIntelligence)")
-                                    .font(.system(size: Constants.FontSize.large, weight: .bold))
-                                    .foregroundColor(.purple)
-                            }
-                            VStack(spacing: 4) {
-                                Text("💚")
-                                Text("\(newStamina)")
-                                    .font(.system(size: Constants.FontSize.large, weight: .bold))
-                                    .foregroundColor(.green)
-                            }
-                            VStack(spacing: 4) {
-                                Text("💪")
-                                Text("\(newStrength)")
-                                    .font(.system(size: Constants.FontSize.large, weight: .bold))
-                                    .foregroundColor(.red)
-                            }
-                        }
-                    }
-                    .padding()
-                    .background(Constants.Colors.darkGray.opacity(0.3))
-                    .cornerRadius(Constants.CornerRadius.large)
-                    .padding(.horizontal)
-                    
-                    HStack(spacing: 8) {
-                        Text("💎")
-                        Text("+\(rebirthReward) 钻石")
-                            .font(.system(size: Constants.FontSize.large, weight: .bold))
-                            .foregroundColor(.cyan)
-                    }
-                    .padding()
-                    .background(Constants.Colors.darkGray.opacity(0.3))
-                    .cornerRadius(Constants.CornerRadius.large)
+
+                    Text("⚡ PWR: \(pet.power)")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundColor(.orange)
+                        .padding(.top, 1)
                 }
-            }
-            
-            Button(action: closeView) {
-                Text("返回")
-                    .font(.system(size: Constants.FontSize.large, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(
-                        LinearGradient(
-                            colors: [Constants.Colors.purple, Constants.Colors.blue],
-                            startPoint: .leading,
-                            endPoint: .trailing
+
+                Spacer(minLength: 4)
+
+                // 基础属性卡片
+                VStack(spacing: 4) {
+                    Text("基础属性")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.7))
+
+                    HStack(spacing: 0) {
+                        statBubble(icon: "🧠", value: "\(newIntelligence)", label: "智力", scale: 1)
+                        statBubble(icon: "💚", value: "\(newStamina)", label: "体力", scale: 1)
+                        statBubble(icon: "💪", value: "\(newStrength)", label: "力量", scale: 1)
+                    }
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, pad)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.white.opacity(0.08))
+                )
+                .padding(.horizontal, pad)
+
+                Spacer(minLength: 4)
+
+                // 钻石奖励
+                HStack(spacing: 4) {
+                    Text("💎")
+                        .font(.system(size: 12))
+                    Text("+\(rebirthReward) 钻石")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.cyan)
+                }
+
+                Spacer(minLength: 4)
+
+                // 返回按钮
+                Button(action: closeView) {
+                    Text("返回")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 32)
+                        .background(
+                            LinearGradient(
+                                colors: [Constants.Colors.purple, Constants.Colors.blue],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
                         )
-                    )
-                    .cornerRadius(Constants.CornerRadius.large)
+                        .cornerRadius(10)
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, pad)
             }
-            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.top, max(safeTop, 4))
+            .padding(.bottom, max(safeBot, 4) + 4)
         }
+        .ignoresSafeArea()
     }
     
     // MARK: - Actions
@@ -559,8 +575,38 @@ struct RebirthView: View {
         newIntelligence = pet.intelligence
         newStamina = pet.stamina
         newStrength = pet.strength
-        withAnimation(.easeInOut(duration: 0.4)) {
-            showResult = true
+        startHatchAnimation()
+    }
+
+    private func startHatchAnimation() {
+        hatchAnimPhase = 0
+        withAnimation(.easeInOut(duration: 0.3)) {
+            showHatchAnimation = true
+        }
+        // Phase 1: 蛋开始抖动 (0.0s)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                hatchAnimPhase = 1
+            }
+        }
+        // Phase 2: 蛋裂开 (0.8s)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                hatchAnimPhase = 2
+            }
+        }
+        // Phase 3: 光芒爆发 (1.4s)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
+            withAnimation(.easeOut(duration: 0.4)) {
+                hatchAnimPhase = 3
+            }
+        }
+        // Phase 4: 新宠物出现 → 跳转结果 (2.2s)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
+            withAnimation(.easeInOut(duration: 0.4)) {
+                showHatchAnimation = false
+                showResult = true
+            }
         }
     }
     
@@ -594,6 +640,129 @@ struct RebirthView: View {
         return CGFloat((total - clampedRemaining) / total)
     }
     
+    // MARK: - 蛋破壳动画
+    private var eggHatchAnimationView: some View {
+        let surfaceGradient = LinearGradient(
+            colors: [
+                Color(red: 0.43, green: 0.12, blue: 0.66),
+                Color(red: 0.68, green: 0.05, blue: 0.34),
+                Color(red: 0.72, green: 0.22, blue: 0.07)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+
+        return GeometryReader { geo in
+            let w = geo.size.width
+            let eggSize = w * 0.35
+
+            ZStack {
+                surfaceGradient.ignoresSafeArea()
+
+                // Phase 3: 光芒爆发
+                if hatchAnimPhase >= 3 {
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [.white.opacity(0.9), .yellow.opacity(0.4), .clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: w * 0.5
+                            )
+                        )
+                        .frame(width: w, height: w)
+                        .scaleEffect(hatchAnimPhase >= 3 ? 1.5 : 0.1)
+                        .opacity(hatchAnimPhase >= 3 ? 0 : 1)
+                        .animation(.easeOut(duration: 0.8), value: hatchAnimPhase)
+
+                    // 星星粒子
+                    ForEach(0..<6, id: \.self) { i in
+                        Image(systemName: "sparkle")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor([Color.yellow, .orange, .white, .pink, .cyan, .yellow][i])
+                            .offset(
+                                x: cos(Double(i) * .pi / 3) * Double(eggSize * 0.8),
+                                y: sin(Double(i) * .pi / 3) * Double(eggSize * 0.8)
+                            )
+                            .scaleEffect(hatchAnimPhase >= 3 ? 1.2 : 0)
+                            .opacity(hatchAnimPhase >= 3 ? 0 : 1)
+                            .animation(.easeOut(duration: 0.6).delay(Double(i) * 0.05), value: hatchAnimPhase)
+                    }
+                }
+
+                VStack(spacing: 8) {
+                    ZStack {
+                        if hatchAnimPhase < 3 {
+                            // 蛋：Phase 1 抖动，Phase 2 裂开
+                            ZStack {
+                                eggIllustration(size: eggSize * 1.8)
+                                    .rotationEffect(.degrees(
+                                        hatchAnimPhase == 1
+                                        ? (Double.random(in: -5...5))
+                                        : 0
+                                    ))
+                                    .animation(
+                                        hatchAnimPhase == 1
+                                        ? .easeInOut(duration: 0.08).repeatCount(8, autoreverses: true)
+                                        : .default,
+                                        value: hatchAnimPhase
+                                    )
+
+                                // 裂纹
+                                if hatchAnimPhase >= 2 {
+                                    crackOverlay(size: eggSize)
+                                        .transition(.opacity)
+                                }
+                            }
+                        } else {
+                            // Phase 3+: 新宠物 emoji 出现
+                            Text(pet.emoji)
+                                .font(.system(size: eggSize * 0.7))
+                                .scaleEffect(hatchAnimPhase >= 3 ? 1 : 0.3)
+                                .animation(.spring(response: 0.5, dampingFraction: 0.6), value: hatchAnimPhase)
+                        }
+                    }
+                    .frame(height: eggSize * 1.4)
+
+                    // 文字
+                    Text(hatchAnimPhase < 3 ? "破壳中..." : "🎉 新宠物诞生！")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(hatchAnimPhase < 3 ? .white : .yellow)
+                        .animation(.easeInOut(duration: 0.3), value: hatchAnimPhase)
+                }
+            }
+        }
+        .ignoresSafeArea()
+    }
+
+    /// 裂纹覆盖层
+    private func crackOverlay(size: CGFloat) -> some View {
+        ZStack {
+            // 主裂纹线条
+            Path { path in
+                path.move(to: CGPoint(x: size * 0.5, y: size * 0.15))
+                path.addLine(to: CGPoint(x: size * 0.42, y: size * 0.35))
+                path.addLine(to: CGPoint(x: size * 0.55, y: size * 0.5))
+                path.addLine(to: CGPoint(x: size * 0.45, y: size * 0.7))
+            }
+            .stroke(Color.white.opacity(0.9), lineWidth: 2)
+
+            // 分支裂纹
+            Path { path in
+                path.move(to: CGPoint(x: size * 0.42, y: size * 0.35))
+                path.addLine(to: CGPoint(x: size * 0.3, y: size * 0.45))
+            }
+            .stroke(Color.white.opacity(0.7), lineWidth: 1.5)
+
+            Path { path in
+                path.move(to: CGPoint(x: size * 0.55, y: size * 0.5))
+                path.addLine(to: CGPoint(x: size * 0.68, y: size * 0.55))
+            }
+            .stroke(Color.white.opacity(0.7), lineWidth: 1.5)
+        }
+        .frame(width: size, height: size)
+    }
+
     // MARK: - Helper Views
 
     private var rebirthDurationText: String {
