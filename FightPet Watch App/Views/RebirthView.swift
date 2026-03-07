@@ -63,6 +63,8 @@ struct RebirthView: View {
             let safeBot = geo.safeAreaInsets.bottom
             let pad: CGFloat = max(6, w * 0.04)
             let scale = min(1.0, max(0.72, h / 210))
+            let heroScale = min(1.18, scale * 1.14)
+            let cardScale = max(0.7, scale * 0.82)
             let topPadding = max(safeTop, 4) + 2
             let bottomPadding = max(2, safeBot * 0.5) + 2
             let buttonHeight = max(28, 30 * scale)
@@ -70,69 +72,66 @@ struct RebirthView: View {
 
             VStack(spacing: 0) {
                 // 顶部标题
-                HStack(spacing: 4 * scale) {
-                    Text("🔄")
-                        .font(.system(size: 13 * scale))
-                    Text("宠物重生")
-                        .font(.system(size: 13 * scale, weight: .bold))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                    Spacer(minLength: 0)
-                    Button(action: closeView) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 15 * scale))
-                            .foregroundColor(.white.opacity(0.6))
+                ZStack {
+                    HStack(spacing: 4 * scale) {
+                        Text("🔄")
+                            .font(.system(size: 13 * scale))
+                        Text("宠物重生")
+                            .font(.system(size: 13 * scale, weight: .bold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
-                    .buttonStyle(.plain)
                 }
+                .frame(maxWidth: .infinity)
+                .frame(height: 22 * scale, alignment: .center)
                 .padding(.horizontal, pad)
                 .padding(.bottom, 4 * scale)
 
                 // 宠物头像 + 名字 + 品质
-                VStack(spacing: 2 * scale) {
+                VStack(spacing: 2 * heroScale) {
                     Text(pet.emoji)
-                        .font(.system(size: 24 * scale))
-                    HStack(spacing: 4 * scale) {
+                        .font(.system(size: 28 * heroScale))
+                    HStack(spacing: 4 * heroScale) {
                         Text(pet.name)
-                            .font(.system(size: 11 * scale, weight: .semibold))
+                            .font(.system(size: 12 * heroScale, weight: .semibold))
                             .foregroundColor(.white)
                             .lineLimit(1)
                             .minimumScaleFactor(0.75)
                         Text(pet.quality.name)
-                            .font(.system(size: 8 * scale, weight: .bold))
+                            .font(.system(size: 9 * heroScale, weight: .bold))
                             .foregroundColor(.white)
-                            .padding(.horizontal, 4 * scale)
-                            .padding(.vertical, 1 * scale)
+                            .padding(.horizontal, 5 * heroScale)
+                            .padding(.vertical, 1.5 * heroScale)
                             .background(pet.quality.color)
-                            .cornerRadius(4 * scale)
+                            .cornerRadius(4 * heroScale)
                     }
                     Text("⚡ PWR: \(pet.power)")
-                        .font(.system(size: 9 * scale, weight: .bold, design: .rounded))
+                        .font(.system(size: 10 * heroScale, weight: .bold, design: .rounded))
                         .foregroundColor(.orange)
                 }
-                .padding(.bottom, 4 * scale)
+                .padding(.bottom, 3 * scale)
 
                 // 基础属性卡片
-                VStack(spacing: 4 * scale) {
+                VStack(spacing: 3 * cardScale) {
                     Text("基础属性")
-                        .font(.system(size: 9 * scale, weight: .semibold))
+                        .font(.system(size: 8 * cardScale, weight: .semibold))
                         .foregroundColor(.white.opacity(0.7))
 
                     HStack(spacing: 0) {
-                        statBubble(icon: "🧠", value: "\(pet.intelligence)", label: "智力", scale: scale)
-                        statBubble(icon: "💚", value: "\(pet.stamina)", label: "体力", scale: scale)
-                        statBubble(icon: "💪", value: "\(pet.strength)", label: "力量", scale: scale)
+                        statBubble(icon: "🧠", value: "\(pet.intelligence)", label: "智力", scale: cardScale)
+                        statBubble(icon: "💚", value: "\(pet.stamina)", label: "体力", scale: cardScale)
+                        statBubble(icon: "💪", value: "\(pet.strength)", label: "力量", scale: cardScale)
                     }
                 }
-                .padding(.vertical, 5 * scale)
-                .padding(.horizontal, pad)
+                .padding(.vertical, 4 * cardScale)
+                .padding(.horizontal, pad * 0.85)
                 .background(
-                    RoundedRectangle(cornerRadius: 10 * scale, style: .continuous)
+                    RoundedRectangle(cornerRadius: 9 * cardScale, style: .continuous)
                         .fill(Color.white.opacity(0.08))
                 )
                 .padding(.horizontal, pad)
-                .padding(.bottom, 4 * scale)
+                .padding(.bottom, 3 * scale)
 
                 // 底部说明
                 Text("确认后进入\(rebirthDurationText)孵化")
@@ -203,14 +202,14 @@ struct RebirthView: View {
     private func statBubble(icon: String, value: String, label: String, scale: CGFloat) -> some View {
         VStack(spacing: 2 * scale) {
             Text(icon)
-                .font(.system(size: 14 * scale))
+                .font(.system(size: 12 * scale))
             Text(value)
-                .font(.system(size: 14 * scale, weight: .bold, design: .rounded))
+                .font(.system(size: 12 * scale, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             Text(label)
-                .font(.system(size: 8 * scale))
+                .font(.system(size: 7 * scale))
                 .foregroundColor(.white.opacity(0.6))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
