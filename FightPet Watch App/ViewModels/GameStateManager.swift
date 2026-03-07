@@ -40,6 +40,12 @@ class GameStateManager: ObservableObject {
                 currentPet: Pet()  // 使用默认Pet，不是preview
             )
         }
+
+        player.currentPet.lockLevelToFixedValue()
+        if var sourcePet = player.rebirthSourcePet {
+            sourcePet.lockLevelToFixedValue()
+            player.rebirthSourcePet = sourcePet
+        }
         
         // 计算离线期间的变化
         processOfflineTime()
@@ -263,6 +269,12 @@ class GameStateManager: ObservableObject {
     
     /// 添加经验并自动升级
     func addExperience(_ amount: Int) {
+        guard amount > 0 else { return }
+        guard player.currentPet.level < Pet.fixedLevel else {
+            player.currentPet.lockLevelToFixedValue()
+            return
+        }
+
         let oldLevel = player.currentPet.level
         player.currentPet.exp += amount
         

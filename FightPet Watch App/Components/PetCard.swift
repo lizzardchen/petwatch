@@ -49,7 +49,7 @@ struct PetCard: View {
                 .fixedSize(horizontal: true, vertical: false)
 
                 // 经验值
-                Text("\(pet.exp)/\(pet.expRequiredForNextLevel())")
+                Text(pet.level >= Pet.fixedLevel ? "MAX" : "\(pet.exp)/\(pet.expRequiredForNextLevel())")
                     .font(.system(size: expFontSize))
                     .foregroundColor(.white.opacity(0.7))
                     .lineLimit(1)

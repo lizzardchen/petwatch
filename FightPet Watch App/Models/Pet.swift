@@ -87,6 +87,8 @@ enum PetQuality: Int, Codable, CaseIterable {
 
 /// 宠物数据模型
 struct Pet: Identifiable, Codable {
+    static let fixedLevel = Constants.Game.fixedPetLevel
+
     let id: UUID
     var name: String
     var emoji: String
@@ -246,8 +248,8 @@ struct Pet: Identifiable, Codable {
         self.id = id
         self.name = name
         self.emoji = emoji
-        self.level = level
-        self.exp = exp
+        self.level = Self.fixedLevel
+        self.exp = 0
         self.quality = quality
         self.intelligence = intelligence
         self.stamina = stamina
@@ -258,6 +260,14 @@ struct Pet: Identifiable, Codable {
         self.rebirthCount = rebirthCount
         self.expPerMinute = expPerMinute
         self.power = power
+    }
+
+    mutating func lockLevelToFixedValue(resetExp: Bool = true) {
+        level = Self.fixedLevel
+        if resetExp {
+            exp = 0
+        }
+        calculatePower()
     }
     
     /// 便捷初始化方法：根据品质随机生成属性
@@ -309,16 +319,16 @@ struct Pet: Identifiable, Codable {
     
     /// 升级宠物（保留溢出经验）
     mutating func levelUp() {
-        if canLevelUp() {
-            let required = expRequiredForNextLevel()
-            exp -= required  // 扣除升级所需经验，保留溢出部分
-            level += 1
-            calculatePower()
-        }
+        guard canLevelUp() else { return }
+        let required = expRequiredForNextLevel()
+        exp -= required  // 扣除升级所需经验，保留溢出部分
+        level += 1
+        calculatePower()
     }
     
     /// 检查是否可以升级
     func canLevelUp() -> Bool {
+        guard level < Self.fixedLevel else { return false }
         return exp >= expRequiredForNextLevel()
     }
     
@@ -395,7 +405,7 @@ struct Pet: Identifiable, Codable {
     
     /// 是否可以重生（等级达到99）
     func canRebirth() -> Bool {
-        return level >= 99
+        return level >= Self.fixedLevel
     }
     
     /// 重生后的品质（SS级重生保持SS）
@@ -412,7 +422,7 @@ struct Pet: Identifiable, Codable {
             id: self.id,
             name: self.name,
             emoji: self.emoji,
-            level: 1,
+            level: Self.fixedLevel,
             exp: 0,
             power: 0,
             quality: newQuality,

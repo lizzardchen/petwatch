@@ -56,171 +56,179 @@ struct RebirthView: View {
     
     // MARK: - 重生确认界面
     private var rebirthConfirmView: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text("🔄")
-                    .font(.system(size: 24))
-                Text("宠物重生")
-                    .font(.system(size: Constants.FontSize.title, weight: .bold))
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                Button(action: closeView) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 24))
-                        .foregroundColor(.white.opacity(0.8))
-                }
-            }
-            .padding()
-            
+        GeometryReader { geo in
+            let pad: CGFloat = max(8, geo.size.width * 0.04)
+
             ScrollView {
-                VStack(spacing: 16) {
-                    VStack(spacing: 8) {
-                        Text(pet.emoji)
-                            .font(.system(size: 50))
-                        
-                        Text(pet.name)
-                            .font(.system(size: Constants.FontSize.large, weight: .semibold))
+                VStack(spacing: 0) {
+                    // 顶部栏
+                    HStack {
+                        Text("🔄")
+                            .font(.system(size: 18))
+                        Text("宠物重生")
+                            .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
-                        
-                        HStack(spacing: 8) {
+                        Spacer()
+                        Button(action: closeView) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 20))
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, pad)
+                    .padding(.top, 2)
+                    .padding(.bottom, 6)
+
+                    // 宠物身份
+                    VStack(spacing: 4) {
+                        Text(pet.emoji)
+                            .font(.system(size: 36))
+                        Text(pet.name)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white)
+                        HStack(spacing: 6) {
                             Text("Lv.\(pet.level)")
-                                .font(.system(size: Constants.FontSize.medium, weight: .bold))
+                                .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.yellow)
-                            
                             Text(pet.quality.name)
-                                .font(.system(size: Constants.FontSize.small, weight: .bold))
+                                .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(.white)
-                                .padding(.horizontal, 8)
+                                .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(pet.quality.color)
-                                .cornerRadius(8)
+                                .cornerRadius(6)
                         }
                     }
-                    .padding()
-                    
-                    Rectangle()
-                        .fill(Color.white.opacity(0.2))
-                        .frame(height: 1)
-                        .padding(.horizontal)
-                    
-                    VStack(spacing: 12) {
-                        Text("重生效果")
-                            .font(.system(size: Constants.FontSize.medium, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.8))
-                        
-                        if let nextQ = pet.quality.nextQuality {
-                            rebirthInfoRow(
-                                title: "品质提升",
-                                oldValue: pet.quality.name,
-                                newValue: nextQ.name,
-                                oldColor: pet.quality.color,
-                                newColor: nextQ.color
-                            )
-                        } else {
-                            rebirthInfoRow(
-                                title: "品质",
-                                oldValue: pet.quality.name,
-                                newValue: pet.quality.name + "(保持)",
-                                oldColor: pet.quality.color,
-                                newColor: pet.quality.color
-                            )
-                        }
-                        
-                        HStack {
-                            Text("等级")
-                                .font(.system(size: Constants.FontSize.small))
-                                .foregroundColor(.white.opacity(0.7))
-                            Spacer()
-                            Text("Lv.\(pet.level)")
-                                .font(.system(size: Constants.FontSize.small, weight: .bold))
-                                .foregroundColor(.red)
-                                .strikethrough()
-                            Text("→")
-                                .foregroundColor(.white.opacity(0.5))
-                            Text("Lv.1")
-                                .font(.system(size: Constants.FontSize.small, weight: .bold))
-                                .foregroundColor(.green)
-                        }
-                        .padding(.horizontal)
-                        
-                        HStack {
-                            Text("属性分配")
-                                .font(.system(size: Constants.FontSize.small))
-                                .foregroundColor(.white.opacity(0.7))
-                            Spacer()
-                            Text("按新品质总点数随机分配")
-                                .font(.system(size: Constants.FontSize.small, weight: .bold))
-                                .foregroundColor(.green)
-                        }
-                        .padding(.horizontal)
-                        
-                        HStack {
-                            Text("钻石奖励")
-                                .font(.system(size: Constants.FontSize.small))
-                                .foregroundColor(.white.opacity(0.7))
-                            Spacer()
-                            Text("💎 +\(pet.quality.rebirthDiamondReward)")
-                                .font(.system(size: Constants.FontSize.small, weight: .bold))
-                                .foregroundColor(.cyan)
-                        }
-                        .padding(.horizontal)
-                    }
-                    .padding()
-                    .background(Constants.Colors.darkGray.opacity(0.3))
-                    .cornerRadius(Constants.CornerRadius.large)
-                    .padding(.horizontal)
-                    
-                    HStack(spacing: 6) {
-                        Text("⚠️")
-                        Text("重生后会进入孵化，孵化完成才生成新宠")
-                            .font(.system(size: Constants.FontSize.small))
-                    }
-                    .foregroundColor(.orange)
-                    .padding(.horizontal)
-                }
-            }
-            
-            VStack(spacing: 10) {
-                Button(action: startRebirthHatching) {
-                    HStack {
-                        Image(systemName: "arrow.counterclockwise")
-                            .font(.system(size: 18, weight: .bold))
-                        Text("确认重生")
-                            .font(.system(size: Constants.FontSize.large, weight: .bold))
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(
-                        LinearGradient(
-                            colors: [Color.orange, Color.red],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .cornerRadius(Constants.CornerRadius.large)
-                }
-                .disabled(!pet.canRebirth())
-                
-                if !pet.canRebirth() {
-                    Text("需达到 Lv.99 才可重生")
-                        .font(.system(size: Constants.FontSize.small))
+                    .padding(.bottom, 8)
+
+                    // 基础信息
+                    compactSection(title: "基础信息", rows: [
+                        ("⚔️", "战力", "\(pet.power)"),
+                        ("✨", "经验", currentExpText),
+                        ("⏱", "经验/分", "+\(pet.expPerMinute)"),
+                        ("🔄", "重生次数", "\(pet.rebirthCount)")
+                    ], pad: pad)
+
+                    // 核心属性
+                    compactSection(title: "核心属性", rows: [
+                        ("🧠", "智慧", "\(pet.intelligence)"),
+                        ("💚", "体力", "\(pet.stamina)"),
+                        ("💪", "力量", "\(pet.strength)"),
+                        ("😊", "快乐值", "\(pet.happiness)")
+                    ], pad: pad)
+
+                    // 状态信息
+                    compactSection(title: "状态信息", rows: [
+                        ("❤️", "亲密值", "\(pet.intimacy)"),
+                        ("😴", "睡眠加成", "\(pet.sleepBonus)"),
+                        ("🗡", "攻击", "\(pet.attack)"),
+                        ("❤️‍🔥", "生命", "\(pet.hp)")
+                    ], pad: pad)
+
+                    // 战斗属性
+                    compactSection(title: "战斗属性", rows: [
+                        ("🛡", "防御", String(format: "%.1f", pet.defense)),
+                        ("💥", "暴击率", String(format: "%.1f%%", pet.critRate)),
+                        ("💨", "速度", String(format: "%.1f", pet.speed)),
+                        ("🥚", "孵化时长", rebirthDurationText)
+                    ], pad: pad)
+
+                    // 底部说明
+                    Text("确认后获得宠物蛋，进入\(rebirthDurationText)孵化流程")
+                        .font(.system(size: 10))
                         .foregroundColor(.orange)
-                }
-                
-                Button(action: closeView) {
-                    Text("取消")
-                        .font(.system(size: Constants.FontSize.large, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Constants.Colors.darkGray)
-                        .cornerRadius(Constants.CornerRadius.large)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, pad)
+                        .padding(.top, 6)
+
+                    // 条件提示
+                    if !pet.canRebirth() {
+                        Text("需达到 Lv.99 才可重生")
+                            .font(.system(size: 10))
+                            .foregroundColor(.red)
+                            .padding(.top, 4)
+                    }
+
+                    // 底部操作按钮
+                    HStack(spacing: 8) {
+                        Button(action: closeView) {
+                            Text("取消")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 36)
+                                .background(Constants.Colors.darkGray)
+                                .cornerRadius(12)
+                        }
+                        .buttonStyle(.plain)
+
+                        Button(action: startRebirthHatching) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "arrow.counterclockwise")
+                                    .font(.system(size: 12, weight: .bold))
+                                Text("确认重生")
+                                    .font(.system(size: 13, weight: .bold))
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 36)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color.orange, Color.red],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .cornerRadius(12)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!pet.canRebirth())
+                        .opacity(pet.canRebirth() ? 1 : 0.45)
+                    }
+                    .padding(.horizontal, pad)
+                    .padding(.top, 8)
+                    .padding(.bottom, 12)
                 }
             }
-            .padding()
+        }
+        .ignoresSafeArea()
+    }
+
+    /// 紧凑属性行（两列网格）
+    private func compactSection(title: String, rows: [(String, String, String)], pad: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            Text(title)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(.white.opacity(0.5))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, pad + 4)
+                .padding(.bottom, 3)
+
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 4),
+                GridItem(.flexible(), spacing: 4)
+            ], spacing: 4) {
+                ForEach(rows, id: \.1) { icon, label, value in
+                    HStack(spacing: 4) {
+                        Text(icon)
+                            .font(.system(size: 10))
+                        Text(label)
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.7))
+                        Spacer()
+                        Text(value)
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 4)
+                    .background(Color.white.opacity(0.06))
+                    .cornerRadius(6)
+                }
+            }
+            .padding(.horizontal, pad)
+            .padding(.bottom, 6)
         }
     }
     
@@ -602,7 +610,15 @@ struct RebirthView: View {
     }
     
     // MARK: - Helper Views
-    
+
+    private var rebirthDurationText: String {
+        formatDuration(Constants.Game.rebirthHatchingDuration)
+    }
+
+    private var currentExpText: String {
+        pet.level >= Pet.fixedLevel ? "MAX" : "\(pet.exp)/\(pet.expRequiredForNextLevel())"
+    }
+
     private func eggIllustration(size: CGFloat) -> some View {
         ZStack {
             Ellipse()
@@ -628,22 +644,20 @@ struct RebirthView: View {
         }
     }
 
-    private func rebirthInfoRow(title: String, oldValue: String, newValue: String, oldColor: Color, newColor: Color) -> some View {
-        HStack {
-            Text(title)
-                .font(.system(size: Constants.FontSize.small))
-                .foregroundColor(.white.opacity(0.7))
-            Spacer()
-            Text(oldValue)
-                .font(.system(size: Constants.FontSize.small, weight: .bold))
-                .foregroundColor(oldColor)
-            Text("→")
-                .foregroundColor(.white.opacity(0.5))
-            Text(newValue)
-                .font(.system(size: Constants.FontSize.small, weight: .bold))
-                .foregroundColor(newColor)
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let totalSeconds = Int(duration)
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+
+        if hours > 0 && minutes > 0 {
+            return "\(hours)小时\(minutes)分钟"
         }
-        .padding(.horizontal)
+
+        if hours > 0 {
+            return "\(hours)小时"
+        }
+
+        return "\(max(minutes, 1))分钟"
     }
 }
 
