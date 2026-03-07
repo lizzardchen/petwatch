@@ -617,7 +617,7 @@ class GameStateManager: ObservableObject {
     /// 开始重生孵化流程（Lv.99 可执行）
     /// - Returns: 重生获得的钻石奖励数量，nil 表示失败
     func startRebirthHatching() -> Int? {
-        guard player.currentPet.canRebirth() else { return nil }
+        // guard player.currentPet.canRebirth() else { return nil }  // 测试：移除等级限制
         guard !player.isHatching else { return nil }
         
         let sourcePet = player.currentPet
@@ -625,8 +625,8 @@ class GameStateManager: ObservableObject {
         
         // 先发放重生奖励，再进入孵化
         player.addDiamonds(reward)
-        player.startHatching(from: sourcePet, duration: 4 * 60 * 60) // 默认 4 小时
-        
+        player.startHatching(from: sourcePet, duration: Constants.Game.rebirthHatchingDuration)
+
         savePlayer()
         syncToFirebase()
         return reward
@@ -647,6 +647,18 @@ class GameStateManager: ObservableObject {
         guard spendDiamonds(cost) else { return false }
         player.reduceHatchingTime(by: 10 * 60)
         savePlayer()
+        return true
+    }
+    
+    /// 直接完成孵化（一次性消耗固定钻石）
+    @discardableResult
+    func directCompleteHatching(cost: Int = Constants.Game.rebirthDirectHatchCost) -> Bool {
+        guard player.isHatching else { return false }
+        guard spendDiamonds(cost) else { return false }
+        
+        player.completeHatchingNow()
+        savePlayer()
+        syncToFirebase()
         return true
     }
     

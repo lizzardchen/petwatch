@@ -6,7 +6,7 @@ struct MainView: View {
     @State private var showRanking = false
     @State private var showActivity = false
     @State private var showStore = false
-    @State private var showRebirth = false
+    @State private var showRebirth = true  // 测试：进入主界面默认打开重生页
     @State private var showDebugInfo = false  // 临时调试开关
     
     var body: some View {
@@ -170,24 +170,35 @@ struct MainView: View {
             }
         }
         .overlay {
-            if showRanking {
-                RankingView(onClose: { showRanking = false })
-                    .environmentObject(gameState)
-                    .transition(
-                        .asymmetric(
-                            insertion: .opacity.combined(with: .scale(scale: 0.98, anchor: .center)),
-                            removal: .opacity
+            ZStack {
+                if showRebirth {
+                    RebirthView(gameState: gameState, onClose: { showRebirth = false })
+                        .transition(
+                            .asymmetric(
+                                insertion: .opacity.combined(with: .scale(scale: 0.98, anchor: .center)),
+                                removal: .opacity
+                            )
                         )
-                    )
-                    .zIndex(10)
+                        .zIndex(9)
+                }
+                
+                if showRanking {
+                    RankingView(onClose: { showRanking = false })
+                        .environmentObject(gameState)
+                        .transition(
+                            .asymmetric(
+                                insertion: .opacity.combined(with: .scale(scale: 0.98, anchor: .center)),
+                                removal: .opacity
+                            )
+                        )
+                        .zIndex(10)
+                }
             }
         }
         .animation(.easeOut(duration: 0.2), value: showRanking)
+        .animation(.easeOut(duration: 0.2), value: showRebirth)
         .sheet(isPresented: $showStore) {
             StoreView(gameState: gameState)
-        }
-        .sheet(isPresented: $showRebirth) {
-            RebirthView(gameState: gameState)
         }
         .sheet(isPresented: $showActivity) {
             ActivityView(gameState: gameState)

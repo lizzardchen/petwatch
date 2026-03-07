@@ -9,6 +9,9 @@ struct PetCard: View {
     let allocatedHeight: CGFloat  // 新增：分配给PetCard的高度
     
     var body: some View {
+        let isRebirthTestingEnabled = true
+        let canOpenRebirth = isRebirthTestingEnabled || pet.level >= 99 || gameState.player.isHatching
+        
         // 基于 allocatedHeight 计算所有尺寸
         let vMargin = allocatedHeight * LayoutConstants.FixedSectionLayout.PetCard.verticalMarginRatio
         let contentHeight = allocatedHeight * LayoutConstants.FixedSectionLayout.PetCard.contentHeightRatio
@@ -44,6 +47,7 @@ struct PetCard: View {
                 }
                 .foregroundColor(.white)
                 .layoutPriority(1)
+                .fixedSize(horizontal: true, vertical: false)
 
                 // 经验值
                 Text("\(pet.exp)/\(pet.expRequiredForNextLevel())")
@@ -51,11 +55,11 @@ struct PetCard: View {
                     .foregroundColor(.white.opacity(0.7))
                     .lineLimit(1)
                     .minimumScaleFactor(0.4)
-                    .layoutPriority(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 
-                Spacer()
                 Button(action: {
-                    if pet.level >= 99 || gameState.player.isHatching {
+                    if canOpenRebirth {
                         onRebirth?()
                     }
                 }) {
@@ -65,12 +69,14 @@ struct PetCard: View {
                         Text(gameState.player.isHatching ? "孵化" : "重生")
                             .font(.system(size: expFontSize * 0.9, weight: .semibold))
                     }
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
                     .foregroundColor(.white)
-                    .padding(.horizontal, screenWidth * 0.05)
+                    .padding(.horizontal, screenWidth * 0.035)
                     .padding(.vertical, firstRowHeight * 0.15)
                     .background(
                         LinearGradient(
-                            colors: (pet.level >= 99 || gameState.player.isHatching) ? [Color.orange, Color.red] : [Color.gray, Color.gray.opacity(0.8)],
+                            colors: canOpenRebirth ? [Color.orange, Color.red] : [Color.gray, Color.gray.opacity(0.8)],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -78,7 +84,8 @@ struct PetCard: View {
                     .cornerRadius(cornerRadius)
                 }
                 .buttonStyle(.plain)
-                .disabled(!(pet.level >= 99 || gameState.player.isHatching))
+                .layoutPriority(2)
+                .disabled(!canOpenRebirth)
             }
             .padding(.horizontal, hPadding)
             .padding(.vertical, vPadding)
@@ -148,4 +155,3 @@ struct PetCard: View {
             )
         )
 }
-
