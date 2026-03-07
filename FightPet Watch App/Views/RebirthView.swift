@@ -57,179 +57,149 @@ struct RebirthView: View {
     // MARK: - 重生确认界面
     private var rebirthConfirmView: some View {
         GeometryReader { geo in
-            let pad: CGFloat = max(8, geo.size.width * 0.04)
+            let w = geo.size.width
+            let h = geo.size.height
+            let safeTop = geo.safeAreaInsets.top
+            let safeBot = geo.safeAreaInsets.bottom
+            let pad: CGFloat = max(6, w * 0.04)
 
-            ScrollView {
-                VStack(spacing: 0) {
-                    // 顶部栏
-                    HStack {
-                        Text("🔄")
-                            .font(.system(size: 18))
-                        Text("宠物重生")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                        Spacer()
-                        Button(action: closeView) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 20))
-                                .foregroundColor(.white.opacity(0.8))
-                        }
-                        .buttonStyle(.plain)
+            VStack(spacing: 0) {
+                // 顶部标题
+                HStack(spacing: 4) {
+                    Text("🔄")
+                        .font(.system(size: 14))
+                    Text("宠物重生")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                    Spacer(minLength: 0)
+                    Button(action: closeView) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(.white.opacity(0.6))
                     }
-                    .padding(.horizontal, pad)
-                    .padding(.top, 2)
-                    .padding(.bottom, 6)
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, pad)
 
-                    // 宠物身份
-                    VStack(spacing: 4) {
-                        Text(pet.emoji)
-                            .font(.system(size: 36))
+                Spacer(minLength: 2)
+
+                // 宠物头像 + 名字 + 品质
+                VStack(spacing: 2) {
+                    Text(pet.emoji)
+                        .font(.system(size: 28))
+                    HStack(spacing: 4) {
                         Text(pet.name)
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(.white)
-                        HStack(spacing: 6) {
-                            Text("Lv.\(pet.level)")
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.yellow)
-                            Text(pet.quality.name)
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(pet.quality.color)
-                                .cornerRadius(6)
-                        }
+                        Text(pet.quality.name)
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1)
+                            .background(pet.quality.color)
+                            .cornerRadius(4)
                     }
-                    .padding(.bottom, 8)
-
-                    // 基础信息
-                    compactSection(title: "基础信息", rows: [
-                        ("⚔️", "战力", "\(pet.power)"),
-                        ("✨", "经验", currentExpText),
-                        ("⏱", "经验/分", "+\(pet.expPerMinute)"),
-                        ("🔄", "重生次数", "\(pet.rebirthCount)")
-                    ], pad: pad)
-
-                    // 核心属性
-                    compactSection(title: "核心属性", rows: [
-                        ("🧠", "智慧", "\(pet.intelligence)"),
-                        ("💚", "体力", "\(pet.stamina)"),
-                        ("💪", "力量", "\(pet.strength)"),
-                        ("😊", "快乐值", "\(pet.happiness)")
-                    ], pad: pad)
-
-                    // 状态信息
-                    compactSection(title: "状态信息", rows: [
-                        ("❤️", "亲密值", "\(pet.intimacy)"),
-                        ("😴", "睡眠加成", "\(pet.sleepBonus)"),
-                        ("🗡", "攻击", "\(pet.attack)"),
-                        ("❤️‍🔥", "生命", "\(pet.hp)")
-                    ], pad: pad)
-
-                    // 战斗属性
-                    compactSection(title: "战斗属性", rows: [
-                        ("🛡", "防御", String(format: "%.1f", pet.defense)),
-                        ("💥", "暴击率", String(format: "%.1f%%", pet.critRate)),
-                        ("💨", "速度", String(format: "%.1f", pet.speed)),
-                        ("🥚", "孵化时长", rebirthDurationText)
-                    ], pad: pad)
-
-                    // 底部说明
-                    Text("确认后获得宠物蛋，进入\(rebirthDurationText)孵化流程")
-                        .font(.system(size: 10))
+                    Text("⚡ PWR: \(pet.power)")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
                         .foregroundColor(.orange)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, pad)
-                        .padding(.top, 6)
+                }
 
-                    // 条件提示
-                    if !pet.canRebirth() {
-                        Text("需达到 Lv.99 才可重生")
-                            .font(.system(size: 10))
-                            .foregroundColor(.red)
-                            .padding(.top, 4)
+                Spacer(minLength: 4)
+
+                // 基础属性卡片
+                VStack(spacing: 4) {
+                    Text("基础属性")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.7))
+
+                    HStack(spacing: 0) {
+                        statBubble(icon: "🧠", value: "\(pet.intelligence)", label: "智力")
+                        statBubble(icon: "💚", value: "\(pet.stamina)", label: "体力")
+                        statBubble(icon: "💪", value: "\(pet.strength)", label: "力量")
                     }
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, pad)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.white.opacity(0.08))
+                )
+                .padding(.horizontal, pad)
 
-                    // 底部操作按钮
-                    HStack(spacing: 8) {
-                        Button(action: closeView) {
-                            Text("取消")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 36)
-                                .background(Constants.Colors.darkGray)
-                                .cornerRadius(12)
-                        }
-                        .buttonStyle(.plain)
+                Spacer(minLength: 4)
 
-                        Button(action: startRebirthHatching) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "arrow.counterclockwise")
-                                    .font(.system(size: 12, weight: .bold))
-                                Text("确认重生")
-                                    .font(.system(size: 13, weight: .bold))
-                            }
+                // 底部说明
+                Text("确认后进入\(rebirthDurationText)孵化")
+                    .font(.system(size: 9))
+                    .foregroundColor(.orange.opacity(0.9))
+
+                if !pet.canRebirth() {
+                    Text("需达到 Lv.99 才可重生")
+                        .font(.system(size: 9))
+                        .foregroundColor(.red)
+                        .padding(.top, 1)
+                }
+
+                Spacer(minLength: 4)
+
+                // 操作按钮
+                HStack(spacing: 6) {
+                    Button(action: closeView) {
+                        Text("取消")
+                            .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 36)
-                            .background(
-                                LinearGradient(
-                                    colors: [Color.orange, Color.red],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .cornerRadius(12)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!pet.canRebirth())
-                        .opacity(pet.canRebirth() ? 1 : 0.45)
+                            .frame(height: 32)
+                            .background(Constants.Colors.darkGray)
+                            .cornerRadius(10)
                     }
-                    .padding(.horizontal, pad)
-                    .padding(.top, 8)
-                    .padding(.bottom, 12)
+                    .buttonStyle(.plain)
+
+                    Button(action: startRebirthHatching) {
+                        HStack(spacing: 3) {
+                            Image(systemName: "arrow.counterclockwise")
+                                .font(.system(size: 11, weight: .bold))
+                            Text("确认重生")
+                                .font(.system(size: 12, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 32)
+                        .background(
+                            LinearGradient(
+                                colors: [Color.orange, Color.red],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .cornerRadius(10)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!pet.canRebirth())
+                    .opacity(pet.canRebirth() ? 1 : 0.45)
                 }
+                .padding(.horizontal, pad)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.top, max(safeTop, 4))
+            .padding(.bottom, max(safeBot, 4) + 4)
         }
         .ignoresSafeArea()
     }
 
-    /// 紧凑属性行（两列网格）
-    private func compactSection(title: String, rows: [(String, String, String)], pad: CGFloat) -> some View {
-        VStack(spacing: 0) {
-            Text(title)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(.white.opacity(0.5))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, pad + 4)
-                .padding(.bottom, 3)
-
-            LazyVGrid(columns: [
-                GridItem(.flexible(), spacing: 4),
-                GridItem(.flexible(), spacing: 4)
-            ], spacing: 4) {
-                ForEach(rows, id: \.1) { icon, label, value in
-                    HStack(spacing: 4) {
-                        Text(icon)
-                            .font(.system(size: 10))
-                        Text(label)
-                            .font(.system(size: 10))
-                            .foregroundColor(.white.opacity(0.7))
-                        Spacer()
-                        Text(value)
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 4)
-                    .background(Color.white.opacity(0.06))
-                    .cornerRadius(6)
-                }
-            }
-            .padding(.horizontal, pad)
-            .padding(.bottom, 6)
+    /// 属性气泡：emoji + 数值 + 标签（三个一排）
+    private func statBubble(icon: String, value: String, label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(icon)
+                .font(.system(size: 16))
+            Text(value)
+                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+            Text(label)
+                .font(.system(size: 9))
+                .foregroundColor(.white.opacity(0.6))
         }
+        .frame(maxWidth: .infinity)
     }
     
     // MARK: - 孵化界面
