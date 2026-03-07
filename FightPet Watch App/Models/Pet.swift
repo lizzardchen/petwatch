@@ -49,6 +49,11 @@ enum PetQuality: Int, Codable, CaseIterable {
         case .rankSS: return nil  // 已是最高品质
         }
     }
+
+    /// 随机获取一个品质（重生时使用）
+    static func randomQuality() -> PetQuality {
+        return PetQuality.allCases.randomElement()!
+    }
     
     /// 重生钻石奖励
     var rebirthDiamondReward: Int {
@@ -408,9 +413,9 @@ struct Pet: Identifiable, Codable {
         return level >= Self.fixedLevel
     }
     
-    /// 重生后的品质（SS级重生保持SS）
+    /// 重生后的品质（随机）
     func rebirthQuality() -> PetQuality {
-        return quality.nextQuality ?? quality
+        return PetQuality.randomQuality()
     }
     
     /// 执行重生，返回新的Pet

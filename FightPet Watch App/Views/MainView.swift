@@ -8,6 +8,7 @@ struct MainView: View {
     @State private var showStore = false
     @State private var showRebirth = false
     @State private var showDebugInfo = false  // 临时调试开关
+    private let nestBottomScrollID = "nest-bottom-scroll-id"
     
     var body: some View {
         GeometryReader { geometry in
@@ -24,148 +25,162 @@ struct MainView: View {
             let fixedSectionHeight = baseFixedSectionHeight + topSafeMargin + bottomSafeMargin
             let scrollSectionHeight = fullScreenHeight - fixedSectionHeight
             
-            ZStack {
-                // 背景渐变（覆盖整个界面）
-                LinearGradient(
-                    colors: [Constants.Colors.purple, Constants.Colors.pink],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-                
-                // 使用 ZStack 进行绝对定位，而不是 VStack
-                ZStack(alignment: .top) {
-                    // 固定顶部区域
-                    ZStack {
-                        // 蓝框：显示固定区域的完整范围（包含安全区域）
-                        // Rectangle()
-                        //     .stroke(Color.blue, lineWidth: 2)
-                        //     .frame(height: fixedSectionHeight)
-                        //     .frame(maxWidth: .infinity, alignment: .top)
-                        //     .ignoresSafeArea(edges: .top)
-                        
-                        VStack(spacing: 0) {
-                            // 添加 Spacer 填充增加的空间（在顶部）
-                            Spacer(minLength: topSafeMargin)
-                            
-                            // TopBar: 25% of baseFixedSectionHeight
-                            TopBar(
-                                diamonds: gameState.player.diamonds,
-                                power: gameState.player.currentPet.power,
-                                onAddDiamonds: { showStore = true },
-                                screenWidth: screenWidth,
-                                allocatedHeight: baseFixedSectionHeight * LayoutConstants.FixedSectionLayout.topBarHeightRatio
-                            )
-                            .padding(.horizontal, screenWidth * 0.04)
-                            
-                            // PetCard: 60% of baseFixedSectionHeight
-                            PetCard(
-                                pet: gameState.player.currentPet,
-                                gameState: gameState,
-                                onRebirth: { showRebirth = true },
-                                screenWidth: screenWidth,
-                                allocatedHeight: baseFixedSectionHeight * LayoutConstants.FixedSectionLayout.petCardHeightRatio
-                            )
-                            .padding(.horizontal, screenWidth * 0.02)
-                            
-                            // ActionButtons: 15% of baseFixedSectionHeight
-                            ActionButtonsView(
-                                screenWidth: screenWidth,
-                                allocatedHeight: baseFixedSectionHeight * LayoutConstants.FixedSectionLayout.actionButtonsHeightRatio,
-                                onRanking: { showRanking = true },
-                                onActivity: { showActivity = true }
-                            )
-                            .padding(.horizontal, screenWidth * 0.04)
-                        
-                            // 添加 Spacer 填充增加的空间（在顶部）
-                            Spacer(minLength: bottomSafeMargin)
-                        }
-                        .ignoresSafeArea(edges: .top)
-                    }
-                    .frame(height: fixedSectionHeight)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                    .ignoresSafeArea(edges: .top)
+            ScrollViewReader { scrollProxy in
+                ZStack {
+                    // 背景渐变（覆盖整个界面）
+                    LinearGradient(
+                        colors: [Constants.Colors.purple, Constants.Colors.pink],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .ignoresSafeArea()
                     
-                    // 可滚动的底部区域 - 定位在固定区域下方
-                    ScrollView {
-                        VStack(spacing: scrollSectionHeight * 0.08) {
-                            PetDisplayView(pet: gameState.player.currentPet,
-                                         screenWidth: screenWidth)
+                    // 使用 ZStack 进行绝对定位，而不是 VStack
+                    ZStack(alignment: .top) {
+                        // 固定顶部区域
+                        ZStack {
+                            // 蓝框：显示固定区域的完整范围（包含安全区域）
+                            // Rectangle()
+                            //     .stroke(Color.blue, lineWidth: 2)
+                            //     .frame(height: fixedSectionHeight)
+                            //     .frame(maxWidth: .infinity, alignment: .top)
+                            //     .ignoresSafeArea(edges: .top)
+                            
+                            VStack(spacing: 0) {
+                                // 添加 Spacer 填充增加的空间（在顶部）
+                                Spacer(minLength: topSafeMargin)
+                                
+                                // TopBar: 25% of baseFixedSectionHeight
+                                TopBar(
+                                    diamonds: gameState.player.diamonds,
+                                    power: gameState.player.currentPet.power,
+                                    onAddDiamonds: { showStore = true },
+                                    screenWidth: screenWidth,
+                                    allocatedHeight: baseFixedSectionHeight * LayoutConstants.FixedSectionLayout.topBarHeightRatio
+                                )
+                                .padding(.horizontal, screenWidth * 0.04)
+                                
+                                // PetCard: 60% of baseFixedSectionHeight
+                                PetCard(
+                                    pet: gameState.player.currentPet,
+                                    gameState: gameState,
+                                    onRebirth: { showRebirth = true },
+                                    screenWidth: screenWidth,
+                                    allocatedHeight: baseFixedSectionHeight * LayoutConstants.FixedSectionLayout.petCardHeightRatio
+                                )
+                                .padding(.horizontal, screenWidth * 0.02)
+                                
+                                // ActionButtons: 15% of baseFixedSectionHeight
+                                ActionButtonsView(
+                                    screenWidth: screenWidth,
+                                    allocatedHeight: baseFixedSectionHeight * LayoutConstants.FixedSectionLayout.actionButtonsHeightRatio,
+                                    onRanking: { showRanking = true },
+                                    onActivity: { showActivity = true }
+                                )
+                                .padding(.horizontal, screenWidth * 0.04)
+                            
+                                // 添加 Spacer 填充增加的空间（在顶部）
+                                Spacer(minLength: bottomSafeMargin)
+                            }
+                            .ignoresSafeArea(edges: .top)
+                        }
+                        .frame(height: fixedSectionHeight)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .ignoresSafeArea(edges: .top)
+                        
+                        // 可滚动的底部区域 - 定位在固定区域下方
+                        ScrollView {
+                            VStack(spacing: scrollSectionHeight * 0.08) {
+                                PetDisplayView(
+                                    pet: gameState.player.currentPet,
+                                    screenWidth: screenWidth,
+                                    onOpenNest: {
+                                        withAnimation(.easeInOut(duration: 0.45)) {
+                                            scrollProxy.scrollTo(nestBottomScrollID, anchor: .bottom)
+                                        }
+                                    }
+                                )
                                 .padding(.horizontal, screenWidth * 0.04)
                                 .padding(.top, scrollSectionHeight * 0.02)  // 减小顶部间距
-                            
-                            // 小窝升级部分
-                            UpgradeOptionsView(
-                                items: gameState.player.upgradeItems,
-                                gameState: gameState,
-                                screenWidth: screenWidth)
-                            .padding(.horizontal, screenWidth * 0.04)
-                            .padding(.bottom, scrollSectionHeight * 0.15)
+                                
+                                // 小窝升级部分
+                                UpgradeOptionsView(
+                                    items: gameState.player.upgradeItems,
+                                    gameState: gameState,
+                                    screenWidth: screenWidth
+                                )
+                                .padding(.horizontal, screenWidth * 0.04)
+                                .padding(.bottom, scrollSectionHeight * 0.15)
+
+                                Color.clear
+                                    .frame(height: 1)
+                                    .id(nestBottomScrollID)
+                            }
                         }
+                        .frame(height: scrollSectionHeight)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .offset(y: fixedSectionHeight)
+                        .ignoresSafeArea(edges: .top)
                     }
-                    .frame(height: scrollSectionHeight)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                    .offset(y: fixedSectionHeight)
-                    .ignoresSafeArea(edges: .top)
-                }
-                
-                // 临时调试信息显示
-                if showDebugInfo {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("📐 尺寸调试")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundColor(.yellow)
-                        
-                        Divider()
-                            .frame(height: 0.5)
-                            .background(Color.yellow)
-                        
-                        Group {
-                            Text("Geo: \(Int(screenWidth))×\(Int(geometry.size.height))")
-                            Text("Safe: ↑\(Int(geometry.safeAreaInsets.top)) ↓\(Int(geometry.safeAreaInsets.bottom))")
+                    
+                    // 临时调试信息显示
+                    if showDebugInfo {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("📐 尺寸调试")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundColor(.yellow)
                             
                             Divider()
                                 .frame(height: 0.5)
-                                .background(Color.yellow.opacity(0.5))
+                                .background(Color.yellow)
                             
-                            Text("完整高度: \(Int(fullScreenHeight))px")
-                                .foregroundColor(.white)
-                            
-                            Divider()
-                                .frame(height: 0.5)
-                                .background(Color.yellow.opacity(0.5))
-                            
-                            Text("固定区: \(Int(fixedSectionHeight))px")
-                                .foregroundColor(.cyan)
-                            Text("  = \(String(format: "%.0f", (fixedSectionHeight/fullScreenHeight)*100))% 全屏")
-                                .foregroundColor(.cyan.opacity(0.8))
-                            
-                            Text("滚动区: \(Int(scrollSectionHeight))px")
-                                .foregroundColor(.green)
-                            Text("  = \(String(format: "%.0f", (scrollSectionHeight/fullScreenHeight)*100))% 全屏")
-                                .foregroundColor(.green.opacity(0.8))
-                            
-                            Divider()
-                                .frame(height: 0.5)
-                                .background(Color.yellow.opacity(0.5))
-                            
-                            let topBarH = fixedSectionHeight * 0.25
-                            let petCardH = fixedSectionHeight * 0.60
-                            let actionH = fixedSectionHeight * 0.15
-                            
-                            Text("TB:\(Int(topBarH)) PC:\(Int(petCardH)) AC:\(Int(actionH))")
-                            Text("∑=\(Int(topBarH + petCardH + actionH))")
-                                .foregroundColor(abs(topBarH + petCardH + actionH - fixedSectionHeight) < 1 ? .green : .red)
+                            Group {
+                                Text("Geo: \(Int(screenWidth))×\(Int(geometry.size.height))")
+                                Text("Safe: ↑\(Int(geometry.safeAreaInsets.top)) ↓\(Int(geometry.safeAreaInsets.bottom))")
+                                
+                                Divider()
+                                    .frame(height: 0.5)
+                                    .background(Color.yellow.opacity(0.5))
+                                
+                                Text("完整高度: \(Int(fullScreenHeight))px")
+                                    .foregroundColor(.white)
+                                
+                                Divider()
+                                    .frame(height: 0.5)
+                                    .background(Color.yellow.opacity(0.5))
+                                
+                                Text("固定区: \(Int(fixedSectionHeight))px")
+                                    .foregroundColor(.cyan)
+                                Text("  = \(String(format: "%.0f", (fixedSectionHeight/fullScreenHeight)*100))% 全屏")
+                                    .foregroundColor(.cyan.opacity(0.8))
+                                
+                                Text("滚动区: \(Int(scrollSectionHeight))px")
+                                    .foregroundColor(.green)
+                                Text("  = \(String(format: "%.0f", (scrollSectionHeight/fullScreenHeight)*100))% 全屏")
+                                    .foregroundColor(.green.opacity(0.8))
+                                
+                                Divider()
+                                    .frame(height: 0.5)
+                                    .background(Color.yellow.opacity(0.5))
+                                
+                                let topBarH = fixedSectionHeight * 0.25
+                                let petCardH = fixedSectionHeight * 0.60
+                                let actionH = fixedSectionHeight * 0.15
+                                
+                                Text("TB:\(Int(topBarH)) PC:\(Int(petCardH)) AC:\(Int(actionH))")
+                                Text("∑=\(Int(topBarH + petCardH + actionH))")
+                                    .foregroundColor(abs(topBarH + petCardH + actionH - fixedSectionHeight) < 1 ? .green : .red)
+                            }
+                            .font(.system(size: 6, design: .monospaced))
+                            .foregroundColor(.white)
                         }
-                        .font(.system(size: 6, design: .monospaced))
-                        .foregroundColor(.white)
+                        .padding(4)
+                        .background(Color.black.opacity(0.9))
+                        .cornerRadius(4)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                        .padding(4)
+                        .allowsHitTesting(false)
                     }
-                    .padding(4)
-                    .background(Color.black.opacity(0.9))
-                    .cornerRadius(4)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                    .padding(4)
-                    .allowsHitTesting(false)
                 }
             }
         }

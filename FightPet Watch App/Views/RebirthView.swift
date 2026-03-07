@@ -436,99 +436,114 @@ struct RebirthView: View {
     private var rebirthResultView: some View {
         GeometryReader { geo in
             let w = geo.size.width
+            let h = geo.size.height
             let safeTop = geo.safeAreaInsets.top
             let safeBot = geo.safeAreaInsets.bottom
             let pad: CGFloat = max(6, w * 0.04)
+            let availableHeight = max(h - safeTop - safeBot, 190)
+            let scale = min(1.0, max(0.78, availableHeight / 240))
+            let heroScale = min(1.05, scale * 1.02)
+            let cardScale = max(0.76, scale * 0.88)
+            let topPadding = max(safeTop, 6) + 4
+            let bottomPadding = max(10, safeBot + 10)
+            let buttonHeight = max(28, 30 * scale)
+            let buttonCorner = 10 * scale
 
             VStack(spacing: 0) {
                 // 标题
                 Text("✨ 孵化完成！✨")
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.system(size: 14 * scale, weight: .bold))
                     .foregroundColor(.yellow)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
 
-                Spacer(minLength: 2)
+                Spacer(minLength: 2 * scale)
 
                 // 宠物头像 + 名字 + 品质
-                VStack(spacing: 2) {
+                VStack(spacing: 2 * heroScale) {
                     Text(pet.emoji)
-                        .font(.system(size: 28))
-                    HStack(spacing: 4) {
+                        .font(.system(size: 26 * heroScale))
+                    HStack(spacing: 4 * heroScale) {
                         Text(pet.name)
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: 11.5 * heroScale, weight: .semibold))
                             .foregroundColor(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                         Text(newQuality.name)
-                            .font(.system(size: 9, weight: .bold))
+                            .font(.system(size: 8.5 * heroScale, weight: .bold))
                             .foregroundColor(.white)
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 1)
+                            .padding(.horizontal, 4 * heroScale)
+                            .padding(.vertical, 1 * heroScale)
                             .background(newQuality.color)
-                            .cornerRadius(4)
+                            .cornerRadius(4 * heroScale)
                     }
 
                     // 品质提升显示
                     if oldQuality != newQuality {
-                        HStack(spacing: 4) {
+                        HStack(spacing: 4 * scale) {
                             Text(oldQuality.name)
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.system(size: 8.5 * scale, weight: .bold))
                                 .foregroundColor(oldQuality.color)
                             Text("→")
-                                .font(.system(size: 9))
+                                .font(.system(size: 8.5 * scale))
                                 .foregroundColor(.white.opacity(0.5))
                             Text(newQuality.name)
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.system(size: 8.5 * scale, weight: .bold))
                                 .foregroundColor(newQuality.color)
                         }
-                        .padding(.top, 1)
+                        .padding(.top, 1 * scale)
                     }
 
                     Text("⚡ PWR: \(pet.power)")
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .font(.system(size: 9.5 * heroScale, weight: .bold, design: .rounded))
                         .foregroundColor(.orange)
-                        .padding(.top, 1)
+                        .padding(.top, 1 * scale)
                 }
 
-                Spacer(minLength: 4)
+                Spacer(minLength: 3 * scale)
 
                 // 基础属性卡片
-                VStack(spacing: 4) {
+                VStack(spacing: 3 * cardScale) {
                     Text("基础属性")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.system(size: 8 * cardScale, weight: .semibold))
                         .foregroundColor(.white.opacity(0.7))
 
                     HStack(spacing: 0) {
-                        statBubble(icon: "🧠", value: "\(newIntelligence)", label: "智力", scale: 1)
-                        statBubble(icon: "💚", value: "\(newStamina)", label: "体力", scale: 1)
-                        statBubble(icon: "💪", value: "\(newStrength)", label: "力量", scale: 1)
+                        statBubble(icon: "🧠", value: "\(newIntelligence)", label: "智力", scale: cardScale)
+                        statBubble(icon: "💚", value: "\(newStamina)", label: "体力", scale: cardScale)
+                        statBubble(icon: "💪", value: "\(newStrength)", label: "力量", scale: cardScale)
                     }
                 }
-                .padding(.vertical, 6)
-                .padding(.horizontal, pad)
+                .padding(.vertical, 4 * cardScale)
+                .padding(.horizontal, pad * 0.85)
                 .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    RoundedRectangle(cornerRadius: 9 * cardScale, style: .continuous)
                         .fill(Color.white.opacity(0.08))
                 )
                 .padding(.horizontal, pad)
 
-                Spacer(minLength: 4)
+                Spacer(minLength: 3 * scale)
 
                 // 钻石奖励
                 HStack(spacing: 4) {
                     Text("💎")
-                        .font(.system(size: 12))
+                        .font(.system(size: 11 * scale))
                     Text("+\(rebirthReward) 钻石")
-                        .font(.system(size: 12, weight: .bold))
+                        .font(.system(size: 11.5 * scale, weight: .bold))
                         .foregroundColor(.cyan)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 }
 
-                Spacer(minLength: 4)
+                Spacer(minLength: 5 * scale)
 
                 // 返回按钮
                 Button(action: closeView) {
                     Text("返回")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 12 * scale, weight: .bold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 32)
+                        .frame(height: buttonHeight)
                         .background(
                             LinearGradient(
                                 colors: [Constants.Colors.purple, Constants.Colors.blue],
@@ -536,14 +551,14 @@ struct RebirthView: View {
                                 endPoint: .trailing
                             )
                         )
-                        .cornerRadius(10)
+                        .cornerRadius(buttonCorner)
                 }
                 .buttonStyle(.plain)
                 .padding(.horizontal, pad)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.top, max(safeTop, 4))
-            .padding(.bottom, max(safeBot, 4) + 4)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .padding(.top, topPadding)
+            .padding(.bottom, bottomPadding)
         }
         .ignoresSafeArea()
     }
@@ -580,30 +595,36 @@ struct RebirthView: View {
 
     private func startHatchAnimation() {
         hatchAnimPhase = 0
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(.easeInOut(duration: 0.35)) {
             showHatchAnimation = true
         }
-        // Phase 1: 蛋开始抖动 (0.0s)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            withAnimation(.easeInOut(duration: 0.3)) {
+        // Phase 1: 能量蓄力
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            withAnimation(.easeInOut(duration: 0.45)) {
                 hatchAnimPhase = 1
             }
         }
-        // Phase 2: 蛋裂开 (0.8s)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            withAnimation(.easeInOut(duration: 0.3)) {
+        // Phase 2: 裂纹出现
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.05) {
+            withAnimation(.easeInOut(duration: 0.45)) {
                 hatchAnimPhase = 2
             }
         }
-        // Phase 3: 光芒爆发 (1.4s)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
-            withAnimation(.easeOut(duration: 0.4)) {
+        // Phase 3: 光芒爆发
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.3) {
+            withAnimation(.easeOut(duration: 0.65)) {
                 hatchAnimPhase = 3
             }
         }
-        // Phase 4: 新宠物出现 → 跳转结果 (2.2s)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
-            withAnimation(.easeInOut(duration: 0.4)) {
+        // Phase 4: 新宠物揭晓
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.15) {
+            withAnimation(.spring(response: 0.7, dampingFraction: 0.6)) {
+                hatchAnimPhase = 4
+            }
+        }
+        // Phase 5: 跳转结果页
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.4) {
+            withAnimation(.easeInOut(duration: 0.45)) {
                 showHatchAnimation = false
                 showResult = true
             }
@@ -654,90 +675,195 @@ struct RebirthView: View {
 
         return GeometryReader { geo in
             let w = geo.size.width
+            let h = geo.size.height
             let eggSize = w * 0.35
+            let sceneScale = min(1.05, max(0.92, h / 230))
+            let isCharging = hatchAnimPhase >= 1
+            let isCracking = hatchAnimPhase >= 2
+            let isBursting = hatchAnimPhase >= 3
+            let isRevealed = hatchAnimPhase >= 4
+            let crackProgress: CGFloat = isBursting ? 1 : (isCracking ? 0.92 : 0)
+            let eggAnimation: Animation =
+                isCharging && !isCracking
+                ? .easeInOut(duration: 0.09).repeatCount(12, autoreverses: true)
+                : .easeOut(duration: 0.45)
 
             ZStack {
                 surfaceGradient.ignoresSafeArea()
 
-                // Phase 3: 光芒爆发
-                if hatchAnimPhase >= 3 {
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [.white.opacity(0.9), .yellow.opacity(0.4), .clear],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: w * 0.5
-                            )
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                .white.opacity(isBursting ? 0.40 : isCharging ? 0.12 : 0.05),
+                                .orange.opacity(isBursting ? 0.28 : isCracking ? 0.12 : 0.04),
+                                .clear
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: w * 0.42
                         )
-                        .frame(width: w, height: w)
-                        .scaleEffect(hatchAnimPhase >= 3 ? 1.5 : 0.1)
-                        .opacity(hatchAnimPhase >= 3 ? 0 : 1)
-                        .animation(.easeOut(duration: 0.8), value: hatchAnimPhase)
+                    )
+                    .frame(width: w * 0.92, height: w * 0.92)
+                    .scaleEffect(isBursting ? 1.45 : isCracking ? 1.02 : 0.72)
+                    .blur(radius: isBursting ? 12 : 18)
+                    .animation(.easeOut(duration: 0.7), value: hatchAnimPhase)
 
-                    // 星星粒子
-                    ForEach(0..<6, id: \.self) { i in
-                        Image(systemName: "sparkle")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor([Color.yellow, .orange, .white, .pink, .cyan, .yellow][i])
-                            .offset(
-                                x: cos(Double(i) * .pi / 3) * Double(eggSize * 0.8),
-                                y: sin(Double(i) * .pi / 3) * Double(eggSize * 0.8)
-                            )
-                            .scaleEffect(hatchAnimPhase >= 3 ? 1.2 : 0)
-                            .opacity(hatchAnimPhase >= 3 ? 0 : 1)
-                            .animation(.easeOut(duration: 0.6).delay(Double(i) * 0.05), value: hatchAnimPhase)
-                    }
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color(red: 0.27, green: 0.92, blue: 0.98).opacity(isBursting ? 0.16 : 0.05),
+                                .clear
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: w * 0.34
+                        )
+                    )
+                    .frame(width: w * 0.76, height: w * 0.76)
+                    .offset(y: isBursting ? -6 : -2)
+                    .scaleEffect(isBursting ? 1.28 : 0.88)
+                    .blur(radius: 16)
+                    .animation(.easeOut(duration: 0.75), value: hatchAnimPhase)
+
+                if isBursting {
+                    hatchBurstRings(sceneWidth: w, eggSize: eggSize, isRevealed: isRevealed)
+                    hatchSparkBurst(eggSize: eggSize, isRevealed: isRevealed)
                 }
 
-                VStack(spacing: 8) {
+                VStack(spacing: 10 * sceneScale) {
                     ZStack {
-                        if hatchAnimPhase < 3 {
-                            // 蛋：Phase 1 抖动，Phase 2 裂开
+                        if !isRevealed {
                             ZStack {
                                 eggIllustration(size: eggSize * 1.8)
-                                    .rotationEffect(.degrees(
-                                        hatchAnimPhase == 1
-                                        ? (Double.random(in: -5...5))
-                                        : 0
-                                    ))
-                                    .animation(
-                                        hatchAnimPhase == 1
-                                        ? .easeInOut(duration: 0.08).repeatCount(8, autoreverses: true)
-                                        : .default,
-                                        value: hatchAnimPhase
+                                    .rotationEffect(.degrees(isCharging && !isCracking ? 6 : 0))
+                                    .offset(
+                                        x: isCharging && !isCracking ? 6 : 0,
+                                        y: isBursting ? 12 : 0
                                     )
+                                    .scaleEffect(isBursting ? 1.08 : 1)
+                                    .opacity(isBursting ? 0.16 : 1)
+                                    .shadow(
+                                        color: .white.opacity(isBursting ? 0.42 : isCracking ? 0.12 : 0),
+                                        radius: isBursting ? 26 : 10
+                                    )
+                                    .animation(eggAnimation, value: hatchAnimPhase)
 
-                                // 裂纹
-                                if hatchAnimPhase >= 2 {
-                                    crackOverlay(size: eggSize)
-                                        .transition(.opacity)
+                                if isCracking {
+                                    crackOverlay(size: eggSize, progress: crackProgress)
+                                        .scaleEffect(isBursting ? 1.12 : 1)
+                                        .opacity(isBursting ? 0.24 : 1)
+                                        .shadow(color: .white.opacity(0.35), radius: 8)
+                                        .animation(.easeOut(duration: 0.9), value: crackProgress)
                                 }
                             }
                         } else {
-                            // Phase 3+: 新宠物 emoji 出现
-                            Text(pet.emoji)
-                                .font(.system(size: eggSize * 0.7))
-                                .scaleEffect(hatchAnimPhase >= 3 ? 1 : 0.3)
-                                .animation(.spring(response: 0.5, dampingFraction: 0.6), value: hatchAnimPhase)
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        RadialGradient(
+                                            colors: [
+                                                .white.opacity(0.56),
+                                                .yellow.opacity(0.20),
+                                                .clear
+                                            ],
+                                            center: .center,
+                                            startRadius: 0,
+                                            endRadius: eggSize * 0.9
+                                        )
+                                    )
+                                    .frame(width: eggSize * 2.3, height: eggSize * 2.3)
+                                    .blur(radius: 14)
+
+                                Text(pet.emoji)
+                                    .font(.system(size: eggSize * 1.18))
+                                    .scaleEffect(isRevealed ? 1.08 : 0.2)
+                                    .shadow(color: .white.opacity(0.5), radius: 14)
+                                    .animation(.spring(response: 0.72, dampingFraction: 0.58), value: hatchAnimPhase)
+                            }
                         }
                     }
-                    .frame(height: eggSize * 1.4)
+                    .frame(height: eggSize * 2.05)
 
-                    // 文字
-                    Text(hatchAnimPhase < 3 ? "破壳中..." : "🎉 新宠物诞生！")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(hatchAnimPhase < 3 ? .white : .yellow)
-                        .animation(.easeInOut(duration: 0.3), value: hatchAnimPhase)
+                    VStack(spacing: 4 * sceneScale) {
+                        Text(hatchAnimationTitle)
+                            .font(.system(size: 16 * sceneScale, weight: .bold))
+                            .foregroundColor(isRevealed ? .yellow : .white)
+                            .animation(.easeInOut(duration: 0.35), value: hatchAnimPhase)
+
+                        Text(hatchAnimationSubtitle)
+                            .font(.system(size: 10.5 * sceneScale, weight: .medium))
+                            .foregroundColor(.white.opacity(0.78))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                            .animation(.easeInOut(duration: 0.35), value: hatchAnimPhase)
+                    }
                 }
+                .scaleEffect(sceneScale)
             }
         }
         .ignoresSafeArea()
     }
 
+    @ViewBuilder
+    private func hatchBurstRings(sceneWidth: CGFloat, eggSize: CGFloat, isRevealed: Bool) -> some View {
+        ForEach(0..<3, id: \.self) { index in
+            Circle()
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            .white.opacity(0.9),
+                            .yellow.opacity(0.85),
+                            .orange.opacity(0.55)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: max(2, sceneWidth * 0.014)
+                )
+                .frame(
+                    width: eggSize * (1.15 + CGFloat(index) * 0.34),
+                    height: eggSize * (1.15 + CGFloat(index) * 0.34)
+                )
+                .scaleEffect(isRevealed ? 1.55 + CGFloat(index) * 0.18 : 0.52 + CGFloat(index) * 0.08)
+                .opacity(isRevealed ? 0 : 0.82 - CGFloat(index) * 0.2)
+                .blur(radius: CGFloat(index) * 0.6)
+                .animation(.easeOut(duration: 0.85).delay(Double(index) * 0.08), value: hatchAnimPhase)
+        }
+    }
+
+    @ViewBuilder
+    private func hatchSparkBurst(eggSize: CGFloat, isRevealed: Bool) -> some View {
+        let particleColors: [Color] = [.yellow, .orange, .white, .pink, .cyan, .yellow, .mint, .white]
+
+        ForEach(0..<12, id: \.self) { index in
+            let angle = Double(index) * (.pi * 2 / 12)
+            let radius = Double(eggSize) * (isRevealed ? 1.55 : 0.70)
+            let symbolName = index.isMultiple(of: 3) ? "star.fill" : "sparkle"
+
+            Image(systemName: symbolName)
+                .font(.system(size: index.isMultiple(of: 3) ? 11 : 14, weight: .bold))
+                .foregroundColor(particleColors[index % particleColors.count])
+                .offset(
+                    x: cos(angle) * radius,
+                    y: sin(angle) * radius
+                )
+                .scaleEffect(isRevealed ? 1.2 : 0.25)
+                .opacity(isRevealed ? 0 : 0.96)
+                .rotationEffect(.degrees(Double(index) * 18))
+                .animation(.easeOut(duration: 0.75).delay(Double(index) * 0.025), value: hatchAnimPhase)
+        }
+    }
+
     /// 裂纹覆盖层
-    private func crackOverlay(size: CGFloat) -> some View {
-        ZStack {
+    private func crackOverlay(size: CGFloat, progress: CGFloat) -> some View {
+        let mainProgress = min(progress * 1.08, 1)
+        let branchProgressA = max(0, min((progress - 0.10) / 0.90, 1))
+        let branchProgressB = max(0, min((progress - 0.22) / 0.78, 1))
+        let branchProgressC = max(0, min((progress - 0.34) / 0.66, 1))
+
+        return ZStack {
             // 主裂纹线条
             Path { path in
                 path.move(to: CGPoint(x: size * 0.5, y: size * 0.15))
@@ -745,20 +871,81 @@ struct RebirthView: View {
                 path.addLine(to: CGPoint(x: size * 0.55, y: size * 0.5))
                 path.addLine(to: CGPoint(x: size * 0.45, y: size * 0.7))
             }
-            .stroke(Color.white.opacity(0.9), lineWidth: 2)
+            .trim(from: 0, to: mainProgress)
+            .stroke(
+                Color.white.opacity(0.95),
+                style: StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round)
+            )
 
-            // 分支裂纹
             Path { path in
                 path.move(to: CGPoint(x: size * 0.42, y: size * 0.35))
                 path.addLine(to: CGPoint(x: size * 0.3, y: size * 0.45))
             }
-            .stroke(Color.white.opacity(0.7), lineWidth: 1.5)
+            .trim(from: 0, to: branchProgressA)
+            .stroke(
+                Color.white.opacity(0.78),
+                style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round)
+            )
 
             Path { path in
                 path.move(to: CGPoint(x: size * 0.55, y: size * 0.5))
                 path.addLine(to: CGPoint(x: size * 0.68, y: size * 0.55))
             }
-            .stroke(Color.white.opacity(0.7), lineWidth: 1.5)
+            .trim(from: 0, to: branchProgressA)
+            .stroke(
+                Color.white.opacity(0.78),
+                style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round)
+            )
+
+            Path { path in
+                path.move(to: CGPoint(x: size * 0.48, y: size * 0.24))
+                path.addLine(to: CGPoint(x: size * 0.62, y: size * 0.30))
+            }
+            .trim(from: 0, to: branchProgressB)
+            .stroke(
+                Color.white.opacity(0.76),
+                style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round)
+            )
+
+            Path { path in
+                path.move(to: CGPoint(x: size * 0.47, y: size * 0.57))
+                path.addLine(to: CGPoint(x: size * 0.31, y: size * 0.62))
+            }
+            .trim(from: 0, to: branchProgressB)
+            .stroke(
+                Color.white.opacity(0.74),
+                style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round)
+            )
+
+            Path { path in
+                path.move(to: CGPoint(x: size * 0.45, y: size * 0.7))
+                path.addLine(to: CGPoint(x: size * 0.35, y: size * 0.82))
+            }
+            .trim(from: 0, to: branchProgressC)
+            .stroke(
+                Color.white.opacity(0.72),
+                style: StrokeStyle(lineWidth: 1.4, lineCap: .round, lineJoin: .round)
+            )
+
+            Path { path in
+                path.move(to: CGPoint(x: size * 0.55, y: size * 0.5))
+                path.addLine(to: CGPoint(x: size * 0.71, y: size * 0.42))
+            }
+            .trim(from: 0, to: branchProgressC)
+            .stroke(
+                Color.white.opacity(0.72),
+                style: StrokeStyle(lineWidth: 1.4, lineCap: .round, lineJoin: .round)
+            )
+
+            Path { path in
+                path.move(to: CGPoint(x: size * 0.43, y: size * 0.43))
+                path.addLine(to: CGPoint(x: size * 0.22, y: size * 0.36))
+            }
+            .trim(from: 0, to: branchProgressC)
+            .stroke(
+                Color.white.opacity(0.68),
+                style: StrokeStyle(lineWidth: 1.3, lineCap: .round, lineJoin: .round)
+            )
         }
         .frame(width: size, height: size)
     }
@@ -771,6 +958,32 @@ struct RebirthView: View {
 
     private var currentExpText: String {
         pet.level >= Pet.fixedLevel ? "MAX" : "\(pet.exp)/\(pet.expRequiredForNextLevel())"
+    }
+
+    private var hatchAnimationTitle: String {
+        switch hatchAnimPhase {
+        case 0, 1:
+            return "能量汇聚中..."
+        case 2:
+            return "破壳中..."
+        case 3:
+            return "光芒绽放..."
+        default:
+            return "🎉 新宠物诞生！"
+        }
+    }
+
+    private var hatchAnimationSubtitle: String {
+        switch hatchAnimPhase {
+        case 0, 1:
+            return "重生之力正在唤醒新生命"
+        case 2:
+            return "再坚持一下，马上就要出现"
+        case 3:
+            return "蜕变完成前的最后闪耀"
+        default:
+            return "你的伙伴完成了这次重生"
+        }
     }
 
     private func eggIllustration(size: CGFloat) -> some View {

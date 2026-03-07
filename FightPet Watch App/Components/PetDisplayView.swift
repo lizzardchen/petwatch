@@ -4,6 +4,7 @@ import SwiftUI
 struct PetDisplayView: View {
     let pet: Pet
     let screenWidth: CGFloat
+    var onOpenNest: () -> Void = {}
     @State private var isEditingName = false
     @State private var editingName = ""
     @EnvironmentObject var gameState: GameStateManager
@@ -31,6 +32,30 @@ struct PetDisplayView: View {
                     .background(pet.quality.color)
                     .cornerRadius(8)
                     .offset(x: 10, y: -5)
+            }
+            .overlay(alignment: .trailing) {
+                Button(action: onOpenNest) {
+                    VStack(spacing: 2) {
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: screenWidth * 0.035, weight: .bold))
+                        Text("小窝")
+                            .font(.system(size: screenWidth * 0.04, weight: .bold))
+                            .lineLimit(1)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Constants.Colors.darkGray.opacity(0.45))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .stroke(Color.white.opacity(0.18), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .offset(x: screenWidth * 0.16, y: screenWidth * 0.04)
             }
             
             // 宠物名称（带编辑功能）
@@ -168,4 +193,3 @@ struct PetDisplayView: View {
             )
         )
 }
-
