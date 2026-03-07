@@ -99,7 +99,7 @@ struct Constants {
         static let shareReward = 100
         static let fixedPetLevel = 99
         static let hatchingTime: TimeInterval = 60 // 60秒
-        static let rebirthHatchingDuration: TimeInterval = 30 * 60
+        static let rebirthHatchingDuration: TimeInterval = 60
         static let rebirthDirectHatchCost = 300
     }
 }

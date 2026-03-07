@@ -46,6 +46,7 @@ class GameStateManager: ObservableObject {
             sourcePet.lockLevelToFixedValue()
             player.rebirthSourcePet = sourcePet
         }
+        normalizeRebirthHatchingDuration()
         
         // 计算离线期间的变化
         processOfflineTime()
@@ -70,6 +71,17 @@ class GameStateManager: ObservableObject {
     
     deinit {
         gameTimer?.invalidate()
+    }
+
+    /// 将已存在的重生孵化时长收敛到当前配置，便于测试时切换倒计时常量
+    private func normalizeRebirthHatchingDuration() {
+        guard player.rebirthSourcePet != nil, let hatchEndDate = player.hatchEndDate else { return }
+
+        let maxEndDate = Date().addingTimeInterval(Constants.Game.rebirthHatchingDuration)
+        guard hatchEndDate > maxEndDate else { return }
+
+        player.hatchEndDate = maxEndDate
+        savePlayer()
     }
     
     // MARK: - 定时器管理
