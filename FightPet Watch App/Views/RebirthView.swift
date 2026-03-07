@@ -305,91 +305,124 @@ struct RebirthView: View {
                     }
 
                     // 状态文字
-                    Text(isReady ? "孵化完成" : "正在孵化...")
+                    Text(isReady ? "✨ 孵化完成！✨" : "正在孵化...")
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(isReady ? .yellow : .white)
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                         .padding(.top, 2)
 
-                    Text("\(Int(progress * 100))%")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
-                        .padding(.top, 1)
+                    if isReady {
+                        // 孵化完成状态
+                        Text("点击下方按钮领取新宠物")
+                            .font(.system(size: 11))
+                            .foregroundColor(.white.opacity(0.76))
+                            .padding(.top, 2)
 
-                    // 时间显示
-                    HStack(spacing: 8) {
-                        Image(systemName: "clock.fill")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(Constants.Colors.blue)
-                            .frame(width: 26, height: 26)
-                            .background(Color(red: 0.21, green: 0.07, blue: 0.30))
-                            .clipShape(Circle())
-                        
-                        VStack(spacing: 0) {
-                            Text("剩余时间")
-                                .font(.system(size: 10))
-                                .foregroundColor(.white.opacity(0.76))
-                            Text(formatCountdown(remaining))
-                                .font(.system(size: 17, weight: .bold, design: .rounded))
-                                .foregroundColor(.white)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.72)
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
-                    .frame(minWidth: timeCardMinWidth)
-                    .background(Color.black.opacity(0.18))
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .padding(.top, 6)
-
-                    // 直接孵化按钮
-                    Button(action: {
-                        if isReady {
+                        Button(action: {
                             finishHatchingIfReady()
-                        } else {
-                            directFinishHatching()
-                        }
-                    }) {
-                        HStack(spacing: 8) {
-                            Image(systemName: isReady ? "sparkles" : "diamond.fill")
-                                .font(.system(size: 15, weight: .bold))
-                            Text(isReady ? "开启新旅程" : "直接孵化 (\(directHatchCost)💎)")
-                                .font(.system(size: 14, weight: .bold))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                        }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: buttonHeight)
-                        .background(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 0.96, green: 0.67, blue: 0.11),
-                                    Color(red: 0.99, green: 0.45, blue: 0.02)
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
+                        }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 15, weight: .bold))
+                                Text("领取宠物！")
+                                    .font(.system(size: 14, weight: .bold))
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 15, weight: .bold))
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: buttonHeight)
+                            .background(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 0.18, green: 0.80, blue: 0.34),
+                                        Color(red: 0.10, green: 0.65, blue: 0.28)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
                             )
-                        )
-                        .cornerRadius(11)
-                        .shadow(color: Color.black.opacity(0.15), radius: 6, x: 0, y: 3)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(!isReady && gameState.player.diamonds < directHatchCost)
-                    .opacity(!isReady && gameState.player.diamonds < directHatchCost ? 0.55 : 1)
-                    .padding(.horizontal, contentInset)
-                    .padding(.top, 8)
+                            .cornerRadius(14)
+                            .shadow(color: Color.black.opacity(0.15), radius: 6, x: 0, y: 3)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, contentInset)
+                        .padding(.top, 10)
+                    } else {
+                        // 孵化中状态
+                        Text("\(Int(progress * 100))%")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                            .padding(.top, 1)
 
-                    // 底部提示文字
-                    Text(isReady ? "新的旅程现在开始..." : "新的旅程即将开始...")
-                        .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.74))
+                        HStack(spacing: 8) {
+                            Image(systemName: "clock.fill")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(Constants.Colors.blue)
+                                .frame(width: 26, height: 26)
+                                .background(Color(red: 0.21, green: 0.07, blue: 0.30))
+                                .clipShape(Circle())
+                            
+                            VStack(spacing: 0) {
+                                Text("剩余时间")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.white.opacity(0.76))
+                                Text(formatCountdown(remaining))
+                                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.72)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 6)
+                        .frame(minWidth: timeCardMinWidth)
+                        .background(Color.black.opacity(0.18))
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                         .padding(.top, 6)
-                        .padding(.bottom, 4)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+
+                        Button(action: {
+                            directFinishHatching()
+                        }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "diamond.fill")
+                                    .font(.system(size: 15, weight: .bold))
+                                Text("直接孵化 (\(directHatchCost)💎)")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: buttonHeight)
+                            .background(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 0.96, green: 0.67, blue: 0.11),
+                                        Color(red: 0.99, green: 0.45, blue: 0.02)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .cornerRadius(14)
+                            .shadow(color: Color.black.opacity(0.15), radius: 6, x: 0, y: 3)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(gameState.player.diamonds < directHatchCost)
+                        .opacity(gameState.player.diamonds < directHatchCost ? 0.55 : 1)
+                        .padding(.horizontal, contentInset)
+                        .padding(.top, 8)
+
+                        Text("新的旅程即将开始...")
+                            .font(.system(size: 11))
+                            .foregroundColor(.white.opacity(0.74))
+                            .padding(.top, 6)
+                            .padding(.bottom, 4)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
                 }
                 .padding(.top, topInset)
                 .padding(.bottom, bottomInset)
@@ -524,8 +557,7 @@ struct RebirthView: View {
     }
     
     private func directFinishHatching() {
-        guard gameState.directCompleteHatching() else { return }
-        finishHatchingIfReady()
+        gameState.directCompleteHatching()
     }
     
     private func finishHatchingIfReady() {
