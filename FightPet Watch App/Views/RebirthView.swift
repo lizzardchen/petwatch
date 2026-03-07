@@ -41,9 +41,6 @@ struct RebirthView: View {
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
             currentTime = date
         }
-        .onAppear {
-            startEggAnimation()
-        }
     }
     
     // MARK: - 蛋的浮动动画
@@ -254,7 +251,7 @@ struct RebirthView: View {
             let topInset = max(safeTop, 8) + 6
             let bottomInset = max(safeBottom, 8) + 12
             let availableHeight = max(screenHeight - topInset - bottomInset, 200)
-            let progressSize = min(screenWidth * 0.44, availableHeight * 0.32)
+            let progressSize = min(screenWidth * 0.47, availableHeight * 0.34)
             let ringLineWidth = max(4, progressSize * 0.048)
             let buttonHeight: CGFloat = 28
             let timeCardMinWidth = min(screenWidth * 0.62, 132)
@@ -402,6 +399,7 @@ struct RebirthView: View {
             .ignoresSafeArea()
         }
         .ignoresSafeArea()
+        .onAppear(perform: startEggAnimation)
     }
     
     // MARK: - 重生结果界面
