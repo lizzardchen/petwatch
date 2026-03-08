@@ -175,21 +175,51 @@ struct BattleView: View {
 
     private var preparingBottomBar: some View {
         let buttonHeight: CGFloat = 34
+        let canStartBattle = gameState.hasRemainingChallenges() && gameState.canBattle()
+        
         return VStack(spacing: 0) {
             Button(action: startBattle) {
-                Text("⚔️ 开始战斗")
+                Text(battleButtonText)
                     .font(.system(size: Constants.FontSize.medium, weight: .bold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: buttonHeight)
-                    .background(Color.red)
+                    .background(canStartBattle ? Color.red : Color.gray)
                     .cornerRadius(buttonHeight / 2)
             }
-        .buttonStyle(.plain)
+            .buttonStyle(.plain)
+            .disabled(!canStartBattle)
+            
+            if !canStartBattle {
+                Text(battleWarningText)
+                    .font(.system(size: 9))
+                    .foregroundColor(.orange)
+                    .padding(.top, 4)
+            }
+        }
         .padding(.horizontal, 10)
         .padding(.top, 8)
         .padding(.bottom, 6)
+    }
+    
+    private var battleButtonText: String {
+        if !gameState.hasRemainingChallenges() {
+            return "⚔️ 次数已用完"
         }
+        if !gameState.canBattle() {
+            return "⚔️ 快乐值不足"
+        }
+        return "⚔️ 开始战斗"
+    }
+    
+    private var battleWarningText: String {
+        if !gameState.hasRemainingChallenges() {
+            return "今日挑战次数已用完"
+        }
+        if !gameState.canBattle() {
+            return "快乐值需要 ≥30 才能战斗"
+        }
+        return ""
     }
 
     private func preparingHeader(headerHeight: CGFloat) -> some View {
@@ -571,6 +601,14 @@ struct BattleView: View {
     }
 
     private func startBattle() {
+        // 检查是否满足战斗条件
+        guard gameState.hasRemainingChallenges() else {
+            return
+        }
+        guard gameState.canBattle() else {
+            return
+        }
+        
         let result = gameState.executeBattle(against: opponent)
         self.rounds = result.rounds
         self.playerWon = result.playerWon

@@ -59,6 +59,11 @@ struct UpgradeItemCard: View {
         currentItem ?? item
     }
     
+    // 检查是否满足解锁条件（前置建筑等级要求）
+    private var isUnlockedByOrder: Bool {
+        gameState.isUpgradeItemUnlocked(displayItem.type)
+    }
+    
     var body: some View {
         Button(action: {
             onTap(displayItem)
@@ -68,7 +73,12 @@ struct UpgradeItemCard: View {
                 if displayItem.isUnlocked {
                     Text(displayItem.type.icon)
                         .font(.system(size: 28))
+                } else if isUnlockedByOrder {
+                    // 满足前置条件但未购买：显示正常图标
+                    Text(displayItem.type.icon)
+                        .font(.system(size: 28))
                 } else {
+                    // 不满足前置条件：显示锁定图标
                     ZStack {
                         Text(displayItem.type.icon)
                             .font(.system(size: 28))
@@ -82,14 +92,20 @@ struct UpgradeItemCard: View {
                 // 名称
                 Text(displayItem.type.rawValue)
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(displayItem.isUnlocked ? .white : .white.opacity(0.4))
+                    .foregroundColor((displayItem.isUnlocked || isUnlockedByOrder) ? .white : .white.opacity(0.4))
                 
                 // 等级或锁定提示
                 if displayItem.isUnlocked {
                     Text("Lv.\(displayItem.level)")
                         .font(.system(size: 8))
                         .foregroundColor(.white.opacity(0.7))
+                } else if isUnlockedByOrder {
+                    // 满足前置条件但未购买：显示可解锁提示
+                    Text("可解锁")
+                        .font(.system(size: 7))
+                        .foregroundColor(.green.opacity(0.9))
                 } else {
+                    // 不满足前置条件：显示解锁要求
                     Text(displayItem.unlockRequirement())
                         .font(.system(size: 7))
                         .foregroundColor(.orange.opacity(0.8))
@@ -100,7 +116,7 @@ struct UpgradeItemCard: View {
             .frame(width: 65, height: 75)
             .padding(.vertical, 4)
             .background(
-                displayItem.isUnlocked 
+                (displayItem.isUnlocked || isUnlockedByOrder)
                     ? Constants.Colors.darkGray.opacity(0.8)
                     : Color.black.opacity(0.5)
             )
@@ -108,7 +124,7 @@ struct UpgradeItemCard: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
                     .stroke(
-                        displayItem.isUnlocked 
+                        (displayItem.isUnlocked || isUnlockedByOrder)
                             ? Color.clear 
                             : Color.white.opacity(0.15),
                         lineWidth: 1
