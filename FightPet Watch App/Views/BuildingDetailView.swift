@@ -29,19 +29,36 @@ struct BuildingDetailView: View {
             let safeTop = geo.safeAreaInsets.top
             let safeBot = geo.safeAreaInsets.bottom
             let pad: CGFloat = max(6, w * 0.04)
+            let topRowHeight: CGFloat = max(20, safeTop)
+            let headerHeight: CGFloat = max(36, safeTop + 12)
+            let headerHorizontalPadding: CGFloat = max(10, w * 0.06)
+            let timeReserveWidth: CGFloat = min(max(44, w * 0.26), 54)
 
             VStack(spacing: 0) {
-                // 标题栏 — 居中在 safe area 区域
-                HStack(spacing: 4) {
-                    Text(currentItem.type.icon)
-                        .font(.system(size: 16))
-                    Text(currentItem.type.rawValue)
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
+                // 顶部区域：第一行与系统时间对齐，下方额外留出顶部空间
+                VStack(spacing: 0) {
+                    HStack(spacing: 0) {
+                        HStack(spacing: 4) {
+                            Text(currentItem.type.icon)
+                                .font(.system(size: 16))
+                            Text(currentItem.type.rawValue)
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.white)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                        Color.clear
+                            .frame(width: timeReserveWidth)
+                    }
+                    .frame(height: topRowHeight)
+
+                    Spacer(minLength: 0)
                 }
-                .frame(height: max(safeTop, 20))
-                .frame(maxWidth: .infinity)
+                .frame(height: headerHeight)
+                .padding(.leading, headerHorizontalPadding)
+                .padding(.trailing, max(4, w * 0.02))
 
                 if !isUnlockedByOrder {
                     Spacer()
@@ -116,7 +133,7 @@ struct BuildingDetailView: View {
                         .cornerRadius(5)
                         .padding(.horizontal, pad)
                     }
-                    .padding(.top, 2)
+                    .padding(.top, 0)
 
                     Spacer(minLength: 2)
                 }
