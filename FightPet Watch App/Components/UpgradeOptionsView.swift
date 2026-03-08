@@ -8,11 +8,11 @@ struct UpgradeOptionsView: View {
     var onSelectItem: (UpgradeItem) -> Void = { _ in }
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             // 标题
             HStack {
                 Text("小窝升级")
-                    .font(.system(size: Constants.FontSize.medium, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.white)
                 
                 Spacer()
@@ -25,7 +25,7 @@ struct UpgradeOptionsView: View {
             
             // 物品横向列表
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
+                HStack(spacing: 8) {
                     ForEach(items) { item in
                         UpgradeItemCard(
                             item: item,
@@ -34,10 +34,11 @@ struct UpgradeOptionsView: View {
                         )
                     }
                 }
-                .padding(.horizontal, 4)
+                .padding(.horizontal, 2)
             }
         }
-        .padding()
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
         .background(Constants.Colors.darkGray.opacity(0.3))
         .cornerRadius(Constants.CornerRadius.large)
     }
@@ -62,44 +63,57 @@ struct UpgradeItemCard: View {
         Button(action: {
             onTap(displayItem)
         }) {
-            VStack(spacing: 6) {
+            VStack(spacing: 3) {
                 // 图标
                 if displayItem.isUnlocked {
                     Text(displayItem.type.icon)
-                        .font(.system(size: 40))
+                        .font(.system(size: 28))
                 } else {
                     ZStack {
                         Text(displayItem.type.icon)
-                            .font(.system(size: 40))
-                            .opacity(0.3)
+                            .font(.system(size: 28))
+                            .opacity(0.15)
                         Image(systemName: "lock.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.gray)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.4))
                     }
                 }
                 
                 // 名称
                 Text(displayItem.type.rawValue)
-                    .font(.system(size: Constants.FontSize.small, weight: .semibold))
-                    .foregroundColor(.white)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(displayItem.isUnlocked ? .white : .white.opacity(0.4))
                 
                 // 等级或锁定提示
                 if displayItem.isUnlocked {
                     Text("Lv.\(displayItem.level)")
-                        .font(.system(size: Constants.FontSize.tiny))
+                        .font(.system(size: 8))
                         .foregroundColor(.white.opacity(0.7))
                 } else {
                     Text(displayItem.unlockRequirement())
-                        .font(.system(size: Constants.FontSize.tiny))
-                        .foregroundColor(.gray)
+                        .font(.system(size: 7))
+                        .foregroundColor(.orange.opacity(0.8))
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                 }
             }
-            .frame(width: 90, height: 110)
-            .padding(.vertical, 8)
-            .background(Constants.Colors.darkGray.opacity(0.8))
-            .cornerRadius(12)
+            .frame(width: 65, height: 75)
+            .padding(.vertical, 4)
+            .background(
+                displayItem.isUnlocked 
+                    ? Constants.Colors.darkGray.opacity(0.8)
+                    : Color.black.opacity(0.5)
+            )
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(
+                        displayItem.isUnlocked 
+                            ? Color.clear 
+                            : Color.white.opacity(0.15),
+                        lineWidth: 1
+                    )
+            )
         }
         .buttonStyle(.plain)
     }
