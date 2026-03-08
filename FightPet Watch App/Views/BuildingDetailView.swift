@@ -35,28 +35,24 @@ struct BuildingDetailView: View {
             let timeReserveWidth: CGFloat = min(max(44, w * 0.26), 54)
 
             VStack(spacing: 0) {
-                // 顶部区域：第一行与系统时间对齐，下方额外留出顶部空间
-                VStack(spacing: 0) {
-                    HStack(spacing: 0) {
-                        HStack(spacing: 4) {
-                            Text(currentItem.type.icon)
-                                .font(.system(size: 16))
-                            Text(currentItem.type.rawValue)
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundColor(.white)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                        Color.clear
-                            .frame(width: timeReserveWidth)
+                // 顶部区域：标题垂直居中
+                HStack(spacing: 0) {
+                    HStack(spacing: 4) {
+                        Text(currentItem.type.icon)
+                            .font(.system(size: 16))
+                        Text(currentItem.type.rawValue)
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
-                    .frame(height: topRowHeight)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                    Spacer(minLength: 0)
+                    Color.clear
+                        .frame(width: timeReserveWidth)
                 }
                 .frame(height: headerHeight)
+                .frame(maxWidth: .infinity)
                 .padding(.leading, headerHorizontalPadding)
                 .padding(.trailing, max(4, w * 0.02))
 
