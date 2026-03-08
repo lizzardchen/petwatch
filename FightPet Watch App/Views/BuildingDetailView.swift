@@ -78,7 +78,7 @@ struct BuildingDetailView: View {
                 } else {
                     // 可升级状态
                     ScrollView {
-                        VStack(spacing: 6) {
+                        VStack(spacing: 5) {
                             // 当前等级
                             infoRow(label: "当前等级", value: "Lv.\(currentItem.level)", valueColor: .white)
 
@@ -109,54 +109,54 @@ struct BuildingDetailView: View {
                             let diff = nextExp - curExp
                             HStack(spacing: 0) {
                                 Text("产出加成")
-                                    .font(.system(size: 11))
+                                    .font(.system(size: 10))
                                     .foregroundColor(.white.opacity(0.6))
                                 Spacer(minLength: 4)
                                 Text("+ ")
-                                    .font(.system(size: 11, weight: .bold))
+                                    .font(.system(size: 10, weight: .bold))
                                     .foregroundColor(.green)
                                 Text("→ ")
-                                    .font(.system(size: 11))
+                                    .font(.system(size: 10))
                                     .foregroundColor(.white.opacity(0.4))
                                 Text("+" + formatExpPerSec(diff))
-                                    .font(.system(size: 11, weight: .bold))
+                                    .font(.system(size: 10, weight: .bold))
                                     .foregroundColor(.green)
                             }
                             .padding(.horizontal, pad)
-                            .padding(.vertical, 4)
+                            .padding(.vertical, 3)
                             .background(Color.white.opacity(0.04))
-                            .cornerRadius(8)
+                            .cornerRadius(7)
                             .padding(.horizontal, pad)
 
                         }
-                        .padding(.top, 6)
+                        .padding(.top, 5)
                     }
                 }
 
                 // 底部按钮
-                VStack(spacing: 6) {
+                VStack(spacing: 5) {
                     if isUnlockedByOrder && currentItem.canUpgrade() {
                         Button(action: { _ = gameState.upgradeItem(currentItem) }) {
                             HStack(spacing: 6) {
                                 Image(systemName: "arrow.up.circle.fill")
-                                    .font(.system(size: 14))
+                                    .font(.system(size: 13))
                                 Text("升级")
-                                    .font(.system(size: 13, weight: .bold))
-                                Text("·")
                                     .font(.system(size: 12, weight: .bold))
+                                Text("·")
+                                    .font(.system(size: 11, weight: .bold))
                                     .foregroundColor(.white.opacity(0.65))
                                 HStack(spacing: 2) {
                                     Text("💎")
-                                        .font(.system(size: 12))
+                                        .font(.system(size: 11))
                                     Text("\(currentItem.upgradeCost())")
-                                        .font(.system(size: 13, weight: .bold))
+                                        .font(.system(size: 12, weight: .bold))
                                 }
                             }
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 34)
+                            .frame(height: 30)
                             .background(canUpgradeNow ? Constants.Colors.purple : Color.gray.opacity(0.5))
-                            .cornerRadius(10)
+                            .cornerRadius(9)
                         }
                         .buttonStyle(.plain)
                         .disabled(!canUpgradeNow)
@@ -170,12 +170,12 @@ struct BuildingDetailView: View {
 
                     Button(action: closeView) {
                         Text("关闭")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 34)
+                            .frame(height: 30)
                             .background(Constants.Colors.darkGray)
-                            .cornerRadius(10)
+                            .cornerRadius(9)
                     }
                     .buttonStyle(.plain)
                 }
@@ -192,17 +192,17 @@ struct BuildingDetailView: View {
     private func infoRow(label: String, value: String, valueColor: Color) -> some View {
         HStack {
             Text(label)
-                .font(.system(size: 11))
+                .font(.system(size: 10))
                 .foregroundColor(.white.opacity(0.6))
             Spacer()
             Text(value)
-                .font(.system(size: 13, weight: .bold))
+                .font(.system(size: 12, weight: .bold))
                 .foregroundColor(valueColor)
         }
         .padding(.horizontal, max(8, 12))
-        .padding(.vertical, 4)
+        .padding(.vertical, 3)
         .background(Color.white.opacity(0.04))
-        .cornerRadius(8)
+        .cornerRadius(7)
         .padding(.horizontal, max(8, 12))
     }
 
