@@ -16,9 +16,9 @@ enum UpgradeItemType: String, Codable {
     
     var description: String {
         switch self {
-        case .petBed: return "钻石/小时"
-        case .foodBowl: return "宠物属性"
-        case .toy: return "快乐值"
+        case .petBed: return "EXP/秒"
+        case .foodBowl: return "EXP/秒"
+        case .toy: return "EXP/秒"
         }
     }
 }
@@ -66,20 +66,20 @@ struct UpgradeItem: Identifiable, Codable {
     
     /// 建筑1（宠物床）每秒经验加成
     static let building1ExpBonus: [Int: Double] = [
-        1: 0.4, 2: 0.44, 3: 0.484, 4: 0.5324, 5: 0.58564,
-        6: 0.644204, 7: 0.708624, 8: 0.779487, 9: 0.857436, 10: 0.943179
+        1: 0.40, 2: 0.44, 3: 0.48, 4: 0.53, 5: 0.59,
+        6: 0.64, 7: 0.71, 8: 0.78, 9: 0.86, 10: 0.94
     ]
     
     /// 建筑2（食物碗）每秒经验加成
     static let building2ExpBonus: [Int: Double] = [
-        1: 0.8, 2: 0.88, 3: 0.968, 4: 1.0648, 5: 1.17128,
-        6: 1.288408, 7: 1.417249, 8: 1.558974, 9: 1.714871, 10: 1.886358
+        1: 0.80, 2: 0.88, 3: 0.97, 4: 1.06, 5: 1.17,
+        6: 1.29, 7: 1.42, 8: 1.56, 9: 1.71, 10: 1.89
     ]
     
     /// 建筑3（玩具）每秒经验加成
     static let building3ExpBonus: [Int: Double] = [
-        1: 1.5, 2: 1.65, 3: 1.815, 4: 1.9965, 5: 2.19615,
-        6: 2.415765, 7: 2.657342, 8: 2.923076, 9: 3.215383, 10: 3.536922
+        1: 1.50, 2: 1.65, 3: 1.82, 4: 2.00, 5: 2.20,
+        6: 2.42, 7: 2.66, 8: 2.92, 9: 3.22, 10: 3.54
     ]
     
     /// 建筑1（宠物床）升级消耗钻石

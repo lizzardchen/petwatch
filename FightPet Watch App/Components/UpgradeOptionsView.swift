@@ -5,6 +5,7 @@ struct UpgradeOptionsView: View {
     let items: [UpgradeItem]
     @ObservedObject var gameState: GameStateManager
     let screenWidth: CGFloat
+    var onSelectItem: (UpgradeItem) -> Void = { _ in }
     
     var body: some View {
         VStack(spacing: 12) {
@@ -26,7 +27,11 @@ struct UpgradeOptionsView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(items) { item in
-                        UpgradeItemCard(item: item, gameState: gameState)
+                        UpgradeItemCard(
+                            item: item,
+                            gameState: gameState,
+                            onTap: onSelectItem
+                        )
                     }
                 }
                 .padding(.horizontal, 4)
@@ -42,7 +47,7 @@ struct UpgradeOptionsView: View {
 struct UpgradeItemCard: View {
     let item: UpgradeItem
     @ObservedObject var gameState: GameStateManager
-    @State private var showDetailView = false
+    var onTap: (UpgradeItem) -> Void = { _ in }
     
     // 从 gameState 获取当前物品状态（因为 item 可能已过时）
     private var currentItem: UpgradeItem? {
@@ -55,8 +60,7 @@ struct UpgradeItemCard: View {
     
     var body: some View {
         Button(action: {
-            // 点击打开详情页面
-            showDetailView = true
+            onTap(displayItem)
         }) {
             VStack(spacing: 6) {
                 // 图标
@@ -98,9 +102,6 @@ struct UpgradeItemCard: View {
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
-        .sheet(isPresented: $showDetailView) {
-            BuildingDetailView(item: displayItem, gameState: gameState)
-        }
     }
 }
 

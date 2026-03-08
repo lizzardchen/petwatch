@@ -7,6 +7,7 @@ struct MainView: View {
     @State private var showActivity = false
     @State private var showStore = false
     @State private var showRebirth = false
+    @State private var selectedUpgradeItem: UpgradeItem? = nil
     @State private var showDebugInfo = false  // 临时调试开关
     private let nestBottomScrollID = "nest-bottom-scroll-id"
     
@@ -107,7 +108,8 @@ struct MainView: View {
                                 UpgradeOptionsView(
                                     items: gameState.player.upgradeItems,
                                     gameState: gameState,
-                                    screenWidth: screenWidth
+                                    screenWidth: screenWidth,
+                                    onSelectItem: { selectedUpgradeItem = $0 }
                                 )
                                 .padding(.horizontal, screenWidth * 0.04)
                                 .padding(.bottom, scrollSectionHeight * 0.15)
@@ -195,6 +197,21 @@ struct MainView: View {
                             )
                         )
                         .zIndex(9)
+                }
+
+                if let selectedUpgradeItem {
+                    BuildingDetailView(
+                        item: selectedUpgradeItem,
+                        gameState: gameState,
+                        onClose: { self.selectedUpgradeItem = nil }
+                    )
+                    .transition(
+                        .asymmetric(
+                            insertion: .opacity.combined(with: .scale(scale: 0.98, anchor: .center)),
+                            removal: .opacity
+                        )
+                    )
+                    .zIndex(9.5)
                 }
                 
                 if showRanking {
