@@ -3,11 +3,13 @@ import SwiftUI
 /// 商店界面
 struct StoreView: View {
     @ObservedObject var gameState: GameStateManager
+    @StateObject private var storeManager = StoreKitManager.shared
     var onClose: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var showPurchaseAlert = false
     @State private var alertTitle = ""
     @State private var alertMessage = ""
+    @State private var isPurchasing = false
 
     private let packages: [StorePackage] = [
         .init(
@@ -57,22 +59,21 @@ struct StoreView: View {
             let safeBottom = geo.safeAreaInsets.bottom
 
             let horizontalInset = max(6, width * 0.03)
-            let topInset = max(2, safeTop * 0.12) + 4
+            let topInset = max(2, safeTop * 0.05) + 2  // 大幅减小 topInset，让标题靠近顶部
             let bottomInset = max(2, safeBottom * 0.12) + 4
             let panelHeight = height - topInset - bottomInset
             let scale = min(1.0, max(0.88, panelHeight / 204))
             let panelRadius = 28 * scale
             let innerPadding = max(10, width * 0.055)
-            let titleFontSize = 17 * scale
+            let titleFontSize = 15 * scale  // 稍微减小标题字体
             let sectionFontSize = 10 * scale
-            let closeButtonSize = 26 * scale
             let packageHeight = 31 * scale
-            let packageSpacing = 5 * scale
+            let packageSpacing = 3 * scale  // 从 5 改为 3，更紧凑
             let closeButtonHeight = 27 * scale
             let closeButtonCorner = 15 * scale
-            let dividerTopPadding = 4 * scale
+            let dividerTopPadding = 2 * scale  // 从 4 改为 2，减少分隔线上方间距
             let cardHeight = 45 * scale
-            let contentSpacing = 7 * scale
+            let contentSpacing = 4 * scale  // 从 7 改为 4，减少内容区域间距
 
             ZStack {
                 LinearGradient(
@@ -116,17 +117,8 @@ struct StoreView: View {
                             .minimumScaleFactor(0.8)
 
                         Spacer(minLength: 0)
-
-                        Button(action: closeView) {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 13 * scale, weight: .bold))
-                                .foregroundColor(.white)
-                                .frame(width: closeButtonSize, height: closeButtonSize)
-                                .background(Color.white.opacity(0.14))
-                                .clipShape(Circle())
-                        }
-                        .buttonStyle(.plain)
                     }
+                    .padding(.bottom, 2 * scale)
 
                     ScrollView(.vertical, showsIndicators: true) {
                         VStack(spacing: contentSpacing) {
@@ -138,7 +130,7 @@ struct StoreView: View {
                                     .font(.system(size: 12 * scale, weight: .medium))
                                     .foregroundColor(.white.opacity(0.62))
                             }
-                            .padding(.top, 6 * scale)
+                            .padding(.top, 3 * scale)  // 从 6 改为 3，减少顶部间距
 
                             VIPExperienceCardView(
                                 gameState: gameState,
@@ -173,9 +165,9 @@ struct StoreView: View {
                                 }
                             }
                         }
-                        .padding(.bottom, 8 * scale)
+                        .padding(.bottom, 6 * scale)  // 从 8 改为 6，减少底部间距
                     }
-                    .padding(.top, 6 * scale)
+                    .padding(.top, 4 * scale)  // 从 6 改为 4，减少顶部间距
 
                     Button(action: closeView) {
                         Text("关闭")
@@ -200,7 +192,7 @@ struct StoreView: View {
                     .buttonStyle(.plain)
                 }
                 .padding(.horizontal, innerPadding)
-                .padding(.top, 8 * scale)
+                .padding(.top, 4 * scale)  // 从 8 改为 4，减少顶部内边距
                 .padding(.bottom, 8 * scale)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .padding(.horizontal, horizontalInset)
@@ -214,31 +206,121 @@ struct StoreView: View {
         } message: {
             Text(alertMessage)
         }
+        .task {
+            await storeManager.loadProducts()
+            await storeManager.checkPendingTransactions()
+        }
+        .onAppear {
+            setupPurchaseNotifications()
+        }
+        .onDisappear {
+            removePurchaseNotifications()
+        }
+        .overlay {
+            if isPurchasing {
+                ZStack {
+                    Color.black.opacity(0.5)
+                        .ignoresSafeArea()
+                    
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(1.5)
+                }
+            }
+        }
     }
 
     private func purchase(_ package: StorePackage) {
-        gameState.addDiamonds(package.amount)
-        alertTitle = "购买成功"
-        alertMessage = "获得 \(package.amount) 钻石"
-        showPurchaseAlert = true
+        Task {
+            isPurchasing = true
+            defer { isPurchasing = false }
+            
+            // 根据套餐金额匹配产品 ID
+            let productID: StoreKitManager.ProductID
+            switch package.amount {
+            case 500:
+                productID = .smallPack
+            case 1200:
+                productID = .mediumPack
+            case 3000:
+                productID = .largePack
+            case 6000:
+                productID = .superPack
+            default:
+                alertTitle = "错误"
+                alertMessage = "未找到对应的产品"
+                showPurchaseAlert = true
+                return
+            }
+            
+            guard let product = storeManager.product(for: productID) else {
+                alertTitle = "错误"
+                alertMessage = "产品加载失败，请稍后重试"
+                showPurchaseAlert = true
+                return
+            }
+            
+            let result = await storeManager.purchase(product)
+            
+            switch result {
+            case .success:
+                alertTitle = "购买成功"
+                alertMessage = "获得 \(package.amount) 💎"
+                showPurchaseAlert = true
+                
+            case .cancelled:
+                // 用户取消，不显示提示
+                break
+                
+            case .pending:
+                alertTitle = "等待确认"
+                alertMessage = "购买正在处理中，请稍后查看"
+                showPurchaseAlert = true
+                
+            case .failed(let error):
+                alertTitle = "购买失败"
+                alertMessage = error.localizedDescription
+                showPurchaseAlert = true
+            }
+        }
     }
 
     private func purchaseExperienceCard() {
-        let wasActive = gameState.player.isExpCardActive
-        let durationSeconds = 30 * 24 * 60 * 60
-        let cost = 18
-
-        if gameState.purchaseExpCard(durationSeconds: durationSeconds, cost: cost) {
-            alertTitle = wasActive ? "VIP 已续期" : "VIP 已激活"
-            alertMessage = wasActive
-                ? "双倍经验卡时长已增加 30 天"
-                : "经验获取速度提升至 x2，持续 30 天"
-        } else {
-            alertTitle = "购买失败"
-            alertMessage = "激活双倍经验卡需要 \(cost) 钻石"
+        Task {
+            isPurchasing = true
+            defer { isPurchasing = false }
+            
+            guard let product = storeManager.product(for: .vipMonthly) else {
+                alertTitle = "错误"
+                alertMessage = "产品加载失败，请稍后重试"
+                showPurchaseAlert = true
+                return
+            }
+            
+            let result = await storeManager.purchase(product)
+            
+            switch result {
+            case .success:
+                let wasActive = gameState.player.isExpCardActive
+                alertTitle = wasActive ? "VIP 已续期" : "VIP 已激活"
+                alertMessage = "经验获取速度提升至 ×2，持续 30 天"
+                showPurchaseAlert = true
+                
+            case .cancelled:
+                // 用户取消，不显示提示
+                break
+                
+            case .pending:
+                alertTitle = "等待确认"
+                alertMessage = "订阅正在处理中，请稍后查看"
+                showPurchaseAlert = true
+                
+            case .failed(let error):
+                alertTitle = "购买失败"
+                alertMessage = error.localizedDescription
+                showPurchaseAlert = true
+            }
         }
-
-        showPurchaseAlert = true
     }
 
     private func closeView() {
@@ -247,6 +329,35 @@ struct StoreView: View {
         } else {
             dismiss()
         }
+    }
+    
+    // MARK: - 通知处理
+    
+    private func setupPurchaseNotifications() {
+        NotificationCenter.default.addObserver(
+            forName: .didPurchaseDiamonds,
+            object: nil,
+            queue: .main
+        ) { notification in
+            if let amount = notification.userInfo?["amount"] as? Int {
+                gameState.addDiamonds(amount)
+            }
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: .didPurchaseVIP,
+            object: nil,
+            queue: .main
+        ) { notification in
+            if let duration = notification.userInfo?["duration"] as? Int {
+                gameState.activateExpCard(durationSeconds: duration)
+            }
+        }
+    }
+    
+    private func removePurchaseNotifications() {
+        NotificationCenter.default.removeObserver(self, name: .didPurchaseDiamonds, object: nil)
+        NotificationCenter.default.removeObserver(self, name: .didPurchaseVIP, object: nil)
     }
 }
 

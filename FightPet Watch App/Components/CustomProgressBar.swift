@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 /// 进度条组件
 struct CustomProgressBar: View {

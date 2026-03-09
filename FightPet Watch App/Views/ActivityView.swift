@@ -1,24 +1,41 @@
 import SwiftUI
 
-/// 运动详情页
+/// 运动追踪页
 struct ActivityView: View {
     @ObservedObject var gameState: GameStateManager
     @Environment(\.dismiss) private var dismiss
     @State private var todayExerciseSeconds: Int = 0
     @State private var todaySleepSeconds: Int = 0
     @State private var isLoadingHealth = false
+    @State private var hasClaimedSleepReward = false
+    @State private var hasClaimedExerciseReward = false
     
-    // 经验加成上限
-    private let exerciseDailyLimitSeconds = 7200   // 2小时
-    private let sleepDailyLimitSeconds = 14400     // 4小时
+    // 每日上限（秒）
+    private let sleepDailyLimitSeconds = 7200      // 120分钟
+    private let exerciseDailyLimitSeconds = 3000   // 50分钟
     
     // 当前状态
     private var isSleeping: Bool { gameState.healthManager.isSleeping }
     private var isExercising: Bool { gameState.healthManager.isExercising }
     
-    // 经验加成
-    private var sleepExpBonus: Double { isSleeping ? 2.0 : 0.0 }
-    private var exerciseExpBonus: Double { isExercising ? 3.0 : 0.0 }
+    // 睡眠质量评级
+    private var sleepQuality: String {
+        let progress = Double(min(todaySleepSeconds, sleepDailyLimitSeconds)) / Double(sleepDailyLimitSeconds)
+        if progress >= 0.8 { return "优" }
+        if progress >= 0.5 { return "良" }
+        if progress >= 0.3 { return "中" }
+        return "差"
+    }
+    
+    // 计算可领取的经验值（每分钟1 EXP）
+    private var claimableExp: Int {
+        return min(todaySleepSeconds, sleepDailyLimitSeconds) / 60
+    }
+    
+    // 计算可领取的力量值（每分钟1点）
+    private var claimableStrength: Int {
+        return min(todayExerciseSeconds, exerciseDailyLimitSeconds) / 60
+    }
     
     var body: some View {
         ZStack {
@@ -28,8 +45,8 @@ struct ActivityView: View {
             VStack(spacing: 0) {
                 // 标题栏
                 HStack {
-                    Text("🏃 运动健康")
-                        .font(.system(size: Constants.FontSize.title, weight: .bold))
+                    Text("运动追踪")
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
                     
                     Spacer()
@@ -37,175 +54,36 @@ struct ActivityView: View {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 24))
-                            .foregroundColor(.white.opacity(0.8))
+                            .foregroundColor(.white.opacity(0.6))
                     }
                 }
-                .padding()
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
                 
                 ScrollView {
-                    VStack(spacing: 14) {
+                    VStack(spacing: 16) {
+                        // 睡眠奖励卡片
+                        sleepRewardCard()
                         
-                        // 当前状态卡片
-                        VStack(spacing: 10) {
-                            Text("当前状态")
-                                .font(.system(size: Constants.FontSize.medium, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.7))
-                            
-                            HStack(spacing: 16) {
-                                // 睡眠状态
-                                statusBadge(
-                                    icon: "🌙",
-                                    label: "睡眠",
-                                    isActive: isSleeping,
-                                    activeText: "睡眠中",
-                                    inactiveText: "未睡眠",
-                                    activeColor: .blue
-                                )
-                                
-                                // 运动状态
-                                statusBadge(
-                                    icon: "🏃",
-                                    label: "运动",
-                                    isActive: isExercising,
-                                    activeText: "运动中",
-                                    inactiveText: "未运动",
-                                    activeColor: .green
-                                )
-                            }
-                        }
-                        .padding()
-                        .background(Constants.Colors.darkGray.opacity(0.3))
-                        .cornerRadius(Constants.CornerRadius.large)
-                        .padding(.horizontal)
+                        // 运动奖励卡片
+                        exerciseRewardCard()
                         
-                        // 今日数据
-                        VStack(spacing: 10) {
-                            Text("今日数据")
-                                .font(.system(size: Constants.FontSize.medium, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.7))
-                            
-                            // 运动时长
-                            healthDataRow(
-                                icon: "🏃",
-                                label: "运动时长",
-                                value: formatDuration(todayExerciseSeconds),
-                                limit: formatDuration(exerciseDailyLimitSeconds),
-                                progress: Double(min(todayExerciseSeconds, exerciseDailyLimitSeconds)) / Double(exerciseDailyLimitSeconds),
-                                color: .green
-                            )
-                            
-                            // 睡眠时长
-                            healthDataRow(
-                                icon: "🌙",
-                                label: "睡眠时长",
-                                value: formatDuration(todaySleepSeconds),
-                                limit: formatDuration(sleepDailyLimitSeconds),
-                                progress: Double(min(todaySleepSeconds, sleepDailyLimitSeconds)) / Double(sleepDailyLimitSeconds),
-                                color: .blue
-                            )
-                        }
-                        .padding()
-                        .background(Constants.Colors.darkGray.opacity(0.3))
-                        .cornerRadius(Constants.CornerRadius.large)
-                        .padding(.horizontal)
-                        
-                        // 经验加成说明
-                        VStack(spacing: 10) {
-                            Text("经验加成")
-                                .font(.system(size: Constants.FontSize.medium, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.7))
-                            
-                            expBonusRow(
-                                icon: "🏃",
-                                label: "运动加成",
-                                bonus: "+3 exp/秒",
-                                condition: "运动中激活",
-                                isActive: isExercising,
-                                dailyLimit: "每日上限2小时"
-                            )
-                            
-                            expBonusRow(
-                                icon: "🌙",
-                                label: "睡眠加成",
-                                bonus: "+2 exp/秒",
-                                condition: "睡眠中激活",
-                                isActive: isSleeping,
-                                dailyLimit: "每日上限4小时"
-                            )
-                            
-                            // 当前总加成
-                            let currentBonus = sleepExpBonus + exerciseExpBonus
-                            if currentBonus > 0 {
-                                HStack {
-                                    Text("✨ 当前健康加成")
-                                        .font(.system(size: Constants.FontSize.small))
-                                        .foregroundColor(.white.opacity(0.8))
-                                    Spacer()
-                                    Text("+\(String(format: "%.0f", currentBonus)) exp/秒")
-                                        .font(.system(size: Constants.FontSize.small, weight: .bold))
-                                        .foregroundColor(.yellow)
-                                }
-                                .padding(.horizontal)
-                                .padding(.top, 4)
-                            }
-                        }
-                        .padding()
-                        .background(Constants.Colors.darkGray.opacity(0.3))
-                        .cornerRadius(Constants.CornerRadius.large)
-                        .padding(.horizontal)
-                        
-                        // 总经验产出
-                        VStack(spacing: 8) {
-                            Text("当前总经验产出")
-                                .font(.system(size: Constants.FontSize.medium, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.7))
-                            
-                            let totalPerSec = gameState.totalExpPerSecond()
-                            let totalPerMin = Int(totalPerSec * 60)
-                            
-                            HStack(spacing: 20) {
-                                VStack(spacing: 2) {
-                                    Text("\(String(format: "%.1f", totalPerSec))")
-                                        .font(.system(size: Constants.FontSize.title, weight: .bold))
-                                        .foregroundColor(.cyan)
-                                    Text("exp/秒")
-                                        .font(.system(size: Constants.FontSize.small))
-                                        .foregroundColor(.white.opacity(0.6))
-                                }
-                                
-                                Text("=")
-                                    .font(.system(size: Constants.FontSize.large))
-                                    .foregroundColor(.white.opacity(0.4))
-                                
-                                VStack(spacing: 2) {
-                                    Text("\(totalPerMin)")
-                                        .font(.system(size: Constants.FontSize.title, weight: .bold))
-                                        .foregroundColor(.cyan)
-                                    Text("exp/分钟")
-                                        .font(.system(size: Constants.FontSize.small))
-                                        .foregroundColor(.white.opacity(0.6))
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(Constants.Colors.darkGray.opacity(0.3))
-                        .cornerRadius(Constants.CornerRadius.large)
-                        .padding(.horizontal)
-                        
-                        // HealthKit 授权状态
-                        if !gameState.healthManager.isAuthorized {
-                            HStack(spacing: 8) {
-                                Text("⚠️")
-                                Text("HealthKit未授权，睡眠和运动加成不可用")
-                                    .font(.system(size: Constants.FontSize.small))
-                                    .foregroundColor(.orange)
-                            }
-                            .padding(.horizontal)
+                        // 关闭按钮
+                        Button(action: { dismiss() }) {
+                            Text("关闭")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 44)
+                                .background(Color.white.opacity(0.15))
+                                .cornerRadius(12)
                         }
                         
                         Spacer()
-                            .frame(height: 16)
+                            .frame(height: 20)
                     }
+                    .padding(.horizontal, 16)
                 }
             }
         }
@@ -214,100 +92,200 @@ struct ActivityView: View {
         }
     }
     
-    // MARK: - Helper Views
+    // MARK: - 睡眠奖励卡片
     
-    private func statusBadge(icon: String, label: String, isActive: Bool, activeText: String, inactiveText: String, activeColor: Color) -> some View {
-        VStack(spacing: 6) {
-            Text(icon)
-                .font(.system(size: 28))
-            
-            Text(isActive ? activeText : inactiveText)
-                .font(.system(size: Constants.FontSize.small, weight: .bold))
-                .foregroundColor(isActive ? activeColor : .white.opacity(0.4))
-            
-            Circle()
-                .fill(isActive ? activeColor : Color.gray.opacity(0.3))
-                .frame(width: 8, height: 8)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .background(isActive ? activeColor.opacity(0.15) : Color.clear)
-        .cornerRadius(10)
-    }
-    
-    private func healthDataRow(icon: String, label: String, value: String, limit: String, progress: Double, color: Color) -> some View {
-        VStack(spacing: 6) {
+    private func sleepRewardCard() -> some View {
+        VStack(spacing: 0) {
+            // 顶部质量评级
             HStack {
-                Text(icon)
-                Text(label)
-                    .font(.system(size: Constants.FontSize.small))
-                    .foregroundColor(.white.opacity(0.8))
+                Text("差")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.5))
+                
                 Spacer()
-                Text(value)
-                    .font(.system(size: Constants.FontSize.small, weight: .bold))
-                    .foregroundColor(.white)
-                Text("/ \(limit)")
-                    .font(.system(size: Constants.FontSize.tiny))
-                    .foregroundColor(.white.opacity(0.4))
+                
+                Circle()
+                    .fill(Color.blue)
+                    .frame(width: 12, height: 12)
+                
+                Spacer()
+                
+                Text("优")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.5))
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 8)
             
+            // 经验值显示
+            Text("+\(claimableExp) EXP/分钟")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.green)
+                .padding(.bottom, 12)
+            
+            // 领取按钮
+            Button(action: claimSleepReward) {
+                HStack(spacing: 6) {
+                    Image(systemName: "gift.fill")
+                        .font(.system(size: 16))
+                    Text("领取")
+                        .font(.system(size: 16, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 44)
+                .background(
+                    LinearGradient(
+                        colors: hasClaimedSleepReward ? [Color.gray, Color.gray.opacity(0.8)] : [Color.green, Color.green.opacity(0.8)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(12)
+            }
+            .disabled(hasClaimedSleepReward || claimableExp == 0)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
+            
+            // 运动时长信息
+            HStack(spacing: 8) {
+                Image(systemName: "figure.run")
+                    .font(.system(size: 16))
+                    .foregroundColor(.orange)
+                
+                Text("运动时长")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.7))
+                
+                Spacer()
+                
+                Text("\(todayExerciseSeconds / 60)分钟")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 8)
+            
+            // 今日力量增长
+            HStack {
+                Text("今日力量增长")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.5))
+                
+                Spacer()
+                
+                Text("\(claimableStrength)/\(exerciseDailyLimitSeconds / 60)")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.blue)
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
+            
+            // 进度条
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.2))
-                        .frame(height: 5)
-                        .cornerRadius(3)
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.white.opacity(0.15))
+                        .frame(height: 12)
                     
-                    Rectangle()
-                        .fill(color)
-                        .frame(width: geo.size.width * min(1.0, progress), height: 5)
-                        .cornerRadius(3)
-                        .animation(.easeInOut(duration: 0.5), value: progress)
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.blue)
+                        .frame(
+                            width: geo.size.width * min(1.0, Double(todayExerciseSeconds) / Double(exerciseDailyLimitSeconds)),
+                            height: 12
+                        )
                 }
             }
-            .frame(height: 5)
+            .frame(height: 12)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
+            
+            // 时长统计
+            HStack {
+                Text("\(todaySleepSeconds / 60)分钟")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.6))
+                
+                Spacer()
+                
+                Text("\(sleepDailyLimitSeconds / 60)分钟")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.6))
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
         }
-        .padding(.horizontal)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.white.opacity(0.08))
+        )
     }
     
-    private func expBonusRow(icon: String, label: String, bonus: String, condition: String, isActive: Bool, dailyLimit: String) -> some View {
-        HStack(spacing: 10) {
-            Text(icon)
-                .font(.system(size: 20))
+    // MARK: - 运动奖励卡片
+    
+    private func exerciseRewardCard() -> some View {
+        VStack(spacing: 12) {
+            // 力量值显示
+            Text("+\(claimableStrength) 力量")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.blue)
             
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
-                    .font(.system(size: Constants.FontSize.small, weight: .semibold))
-                    .foregroundColor(.white)
-                Text(dailyLimit)
-                    .font(.system(size: Constants.FontSize.tiny))
-                    .foregroundColor(.white.opacity(0.4))
+            // 领取按钮
+            Button(action: claimExerciseReward) {
+                HStack(spacing: 6) {
+                    Image(systemName: "gift.fill")
+                        .font(.system(size: 16))
+                    Text("领取")
+                        .font(.system(size: 16, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 44)
+                .background(
+                    LinearGradient(
+                        colors: hasClaimedExerciseReward ? [Color.gray, Color.gray.opacity(0.8)] : [Color.blue, Color.blue.opacity(0.8)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(12)
             }
-            
-            Spacer()
-            
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(bonus)
-                    .font(.system(size: Constants.FontSize.small, weight: .bold))
-                    .foregroundColor(isActive ? .green : .white.opacity(0.4))
-                Text(isActive ? "✅ 生效中" : condition)
-                    .font(.system(size: Constants.FontSize.tiny))
-                    .foregroundColor(isActive ? .green : .white.opacity(0.4))
-            }
+            .disabled(hasClaimedExerciseReward || claimableStrength == 0)
         }
-        .padding(.horizontal)
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.white.opacity(0.08))
+        )
+    }
+    
+    // MARK: - Actions
+    
+    private func claimSleepReward() {
+        guard !hasClaimedSleepReward && claimableExp > 0 else { return }
+        
+        // 添加经验值
+        gameState.addExperience(claimableExp)
+        hasClaimedSleepReward = true
+        
+        // 触觉反馈
+        WKInterfaceDevice.current().play(.success)
+    }
+    
+    private func claimExerciseReward() {
+        guard !hasClaimedExerciseReward && claimableStrength > 0 else { return }
+        
+        // 添加力量属性
+        gameState.player.currentPet.strength += claimableStrength
+        gameState.savePlayer()
+        hasClaimedExerciseReward = true
+        
+        // 触觉反馈
+        WKInterfaceDevice.current().play(.success)
     }
     
     // MARK: - Helpers
-    
-    private func formatDuration(_ seconds: Int) -> String {
-        let hours = seconds / 3600
-        let minutes = (seconds % 3600) / 60
-        if hours > 0 {
-            return "\(hours)h\(minutes)m"
-        }
-        return "\(minutes)m"
-    }
     
     private func loadHealthData() {
         isLoadingHealth = true
@@ -329,6 +307,7 @@ struct ActivityView: View {
         gameState.healthManager.isCurrentlyExercising { _ in }
     }
 }
+
 
 #Preview {
     ActivityView(gameState: GameStateManager())

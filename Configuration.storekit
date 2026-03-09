@@ -1,0 +1,178 @@
+{
+  "identifier" : "B8E7A8F2",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "6",
+      "familyShareable" : false,
+      "internalID" : "6502891234",
+      "localizations" : [
+        {
+          "description" : "获得 500 钻石",
+          "displayName" : "小包",
+          "locale" : "zh_CN"
+        },
+        {
+          "description" : "Get 500 Diamonds",
+          "displayName" : "Small Pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.fightpet.diamonds.small",
+      "referenceName" : "Small Diamond Pack",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "12",
+      "familyShareable" : false,
+      "internalID" : "6502891235",
+      "localizations" : [
+        {
+          "description" : "获得 1200 钻石",
+          "displayName" : "中包",
+          "locale" : "zh_CN"
+        },
+        {
+          "description" : "Get 1200 Diamonds",
+          "displayName" : "Medium Pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.fightpet.diamonds.medium",
+      "referenceName" : "Medium Diamond Pack",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "25",
+      "familyShareable" : false,
+      "internalID" : "6502891236",
+      "localizations" : [
+        {
+          "description" : "获得 3000 钻石 - 最划算",
+          "displayName" : "大包",
+          "locale" : "zh_CN"
+        },
+        {
+          "description" : "Get 3000 Diamonds - Best Value",
+          "displayName" : "Large Pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.fightpet.diamonds.large",
+      "referenceName" : "Large Diamond Pack",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "45",
+      "familyShareable" : false,
+      "internalID" : "6502891237",
+      "localizations" : [
+        {
+          "description" : "获得 6000 钻石",
+          "displayName" : "超级包",
+          "locale" : "zh_CN"
+        },
+        {
+          "description" : "Get 6000 Diamonds",
+          "displayName" : "Super Pack",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.fightpet.diamonds.super",
+      "referenceName" : "Super Diamond Pack",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "6502891200",
+    "_developerTeamID" : "YOUR_TEAM_ID",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 731635200.0,
+    "_locale" : "zh_CN",
+    "_storefront" : "CHN",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Refund Request Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      }
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21482395",
+      "localizations" : [
+
+      ],
+      "name" : "VIP Subscription",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "18",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6502891238",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "经验获取速度 ×2，持续 30 天",
+              "displayName" : "VIP 月订阅",
+              "locale" : "zh_CN"
+            },
+            {
+              "description" : "Double EXP gain for 30 days",
+              "displayName" : "VIP Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.fightpet.vip.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "VIP Monthly Subscription",
+          "subscriptionGroupID" : "21482395",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
