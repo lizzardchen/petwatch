@@ -199,6 +199,17 @@ struct MainView: View {
                         .zIndex(8.5)
                 }
 
+                if showActivity {
+                    ActivityView(gameState: gameState, onClose: { showActivity = false })
+                        .transition(
+                            .asymmetric(
+                                insertion: .opacity.combined(with: .scale(scale: 0.98, anchor: .center)),
+                                removal: .opacity
+                            )
+                        )
+                        .zIndex(8.7)
+                }
+
                 if showRebirth {
                     RebirthView(gameState: gameState, onClose: { showRebirth = false })
                         .transition(
@@ -241,9 +252,7 @@ struct MainView: View {
         .animation(.easeOut(duration: 0.2), value: showRanking)
         .animation(.easeOut(duration: 0.2), value: showRebirth)
         .animation(.easeOut(duration: 0.2), value: showStore)
-        .sheet(isPresented: $showActivity) {
-            ActivityView(gameState: gameState)
-        }
+        .animation(.easeOut(duration: 0.2), value: showActivity)
     }
 }
 
