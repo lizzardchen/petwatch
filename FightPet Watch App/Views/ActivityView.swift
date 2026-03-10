@@ -60,6 +60,8 @@ struct ActivityView: View {
                             .foregroundColor(.white.opacity(0.4))
                             .padding(.bottom, 8)
                     }
+                    .frame(maxWidth: .infinity, alignment: .top)
+                    .contentShape(Rectangle())
                 }
 
                 headerView(topInset: topInset)
@@ -104,83 +106,86 @@ struct ActivityView: View {
 
     private var sleepSection: some View {
         VStack(spacing: 4) {
-            HStack(spacing: 6) {
-                Image(systemName: "moon.fill")
-                    .font(.system(size: 13))
-                    .foregroundColor(.purple.opacity(0.8))
-                
-                Text("睡眠质量")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.8))
-                
-                Spacer()
-                
-                Text("\(todaySleepSeconds / 60)")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
-            }
-            .padding(.horizontal, 12)
-            
-            HStack {
-                Text("已经验加成")
-                    .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.5))
-                
-                Spacer()
-                
-                Text("\(claimableExp)/\(sleepDailyLimitSeconds / 60)")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.green)
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 2)
-            
             VStack(spacing: 2) {
+                HStack(spacing: 6) {
+                    Image(systemName: "moon.fill")
+                        .font(.system(size: 13))
+                        .foregroundColor(.purple.opacity(0.8))
+                    
+                    Text("睡眠质量")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.8))
+                    
+                    Spacer()
+                    
+                    Text("\(todaySleepSeconds / 60)")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 12)
+                
                 HStack {
-                    Text("差")
-                        .font(.system(size: 10))
+                    Text("已经验加成")
+                        .font(.system(size: 11))
                         .foregroundColor(.white.opacity(0.5))
                     
                     Spacer()
                     
-                    Text("优")
-                        .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.5))
+                    Text("\(claimableExp)/\(sleepDailyLimitSeconds / 60)")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.green)
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 12)
+                .padding(.top, 2)
                 
-                GeometryReader { sliderGeo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Color.white.opacity(0.15))
-                            .frame(height: 28)
+                VStack(spacing: 2) {
+                    HStack {
+                        Text("差")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.5))
                         
-                        let progress = Double(min(todaySleepSeconds, sleepDailyLimitSeconds)) / Double(sleepDailyLimitSeconds)
-                        let indicatorX = max(16, min((sliderGeo.size.width - 32) * CGFloat(progress) + 16, sliderGeo.size.width - 16))
+                        Spacer()
                         
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.cyan, Color.blue],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 32, height: 32)
-                            .shadow(color: Color.blue.opacity(0.5), radius: 4, x: 0, y: 2)
-                            .offset(x: indicatorX - 16)
+                        Text("优")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.5))
                     }
+                    .padding(.horizontal, 16)
+                    
+                    GeometryReader { sliderGeo in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color.white.opacity(0.15))
+                                .frame(height: 28)
+                            
+                            let progress = Double(min(todaySleepSeconds, sleepDailyLimitSeconds)) / Double(sleepDailyLimitSeconds)
+                            let indicatorX = max(16, min((sliderGeo.size.width - 32) * CGFloat(progress) + 16, sliderGeo.size.width - 16))
+                            
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.cyan, Color.blue],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 32, height: 32)
+                                .shadow(color: Color.blue.opacity(0.5), radius: 4, x: 0, y: 2)
+                                .offset(x: indicatorX - 16)
+                        }
+                    }
+                    .frame(height: 32)
                 }
-                .frame(height: 32)
+                .padding(.horizontal, 12)
+                .padding(.top, 4)
+                
+                Text("+\(claimableExp) EXP/分钟")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.green)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 6)
             }
-            .padding(.horizontal, 12)
-            .padding(.top, 4)
-            
-            Text("+\(claimableExp) EXP/分钟")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.green)
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.top, 6)
+            .allowsHitTesting(false)
             
             Button(action: claimSleepReward) {
                 HStack(spacing: 4) {
@@ -273,6 +278,7 @@ struct ActivityView: View {
             .padding(.horizontal, 12)
             .padding(.top, 6)
         }
+        .allowsHitTesting(false)
     }
     
     // MARK: - Actions
